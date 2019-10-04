@@ -1,0 +1,14 @@
+language: python
+python:
+- '3.6'
+install:
+- pip install --upgrade pip
+- pip install --progress-bar off https://download.pytorch.org/whl/cpu/torch-1.0.1.post2-cp36-cp36m-linux_x86_64.whl
+- pip install --progress-bar off torchvision
+- git clone https://github.com/mariogeiger/hessian.git
+- cd hessian
+- pip install .
+- cd ../
+- pip install --progress-bar off .
+script:
+- nosetests -v tests/
