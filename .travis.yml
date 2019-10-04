@@ -2,10 +2,7 @@ language: python
 python:
 - '3.6'
 install:
-- pip install --upgrade pip
 - pip install --progress-bar off torch==1.2.0+cpu torchvision==0.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-- pip install --progress-bar off torchvision
-- cd ../
 - pip install --progress-bar off .
 script:
 - nosetests -v tests/
