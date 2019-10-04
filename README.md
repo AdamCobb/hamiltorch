@@ -5,10 +5,7 @@
 
  ## How to install
 
-First install the dependency:
-https://github.com/mariogeiger/hessian
-
-Then install this package:
+Install this package:
 
 ```
 git clone https://github.com/AdamCobb/hamiltorch.git
