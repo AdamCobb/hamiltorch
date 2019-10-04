@@ -5,10 +5,22 @@
 
  ## How to install
 
-Install this package:
-
 ```
 git clone https://github.com/AdamCobb/hamiltorch.git
 cd hamiltorch
 pip install .
 ```
+
+ ## How does it work?
+
+ Please refer to my [blog post](https://adamcobb.github.io/journal/hamiltorch.html)
+
+ ## How to cite?
+
+ Paper link coming soon!
+
+ ## Who developed hamiltorch?
+
+ [Adam D Cobb](https://adamcobb.github.io)
+
+ [Atılım Güneş Baydin](http://www.robots.ox.ac.uk/~gunes/)
