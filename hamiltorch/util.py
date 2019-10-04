@@ -1,8 +1,11 @@
 import torch
 import numpy as np
 import time
+from termcolor import colored
+import inspect
 import random
 import sys
+
 
 def set_random_seed(seed=None):
     if seed is None:
@@ -271,3 +274,17 @@ def make_functional(module):
         return fmodule_internal(*args, **kwargs)
 
     return fmodule
+
+
+def eval_print(*expressions):
+    print('\n\n' + colored(inspect.stack()[1][3], 'white', attrs=['bold']))
+    frame = sys._getframe(1)
+    max_str_length = 0
+    for expression in expressions:
+        if len(expression) > max_str_length:
+            max_str_length = len(expression)
+    for expression in expressions:
+        val = eval(expression, frame.f_globals, frame.f_locals)
+        if isinstance(val, np.ndarray):
+            val = val.tolist()
+        print('  {} = {}'.format(expression.ljust(max_str_length), repr(val)))
