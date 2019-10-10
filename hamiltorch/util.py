@@ -120,20 +120,27 @@ class LogProbError(Exception):
 def flatten(model):
     return torch.cat([p.flatten() for p in model.parameters()])
 
-def unflatten(model, params):
-    if params.dim() != 1:
-        raise ValueError('Expecting a 1d params')
+
+def unflatten(model, flattened_params):
+    if flattened_params.dim() != 1:
+        raise ValueError('Expecting a 1d flattened_params')
     params_list = []
     i = 0
     for val in list(model.parameters()):
         length = val.nelement()
-        param = params[i:i+length].view_as(val)
+        param = flattened_params[i:i+length].view_as(val)
         params_list.append(param)
         i += length
+
     return params_list
 
-# Edited from https://github.com/mariogeiger/hessian
 
+def update_model_params_in_place(model, params):
+    for weights, new_w in zip(model.parameters(), params):
+        weights.data = new_w
+
+
+# Edited from https://github.com/mariogeiger/hessian
 def gradient(outputs, inputs, grad_outputs=None, retain_graph=None, create_graph=False):
     '''
     Compute the gradient of `outputs` with respect to `inputs`
@@ -152,7 +159,8 @@ def gradient(outputs, inputs, grad_outputs=None, retain_graph=None, create_graph
     grads = [x if x is not None else torch.zeros_like(y) for x, y in zip(grads, inputs)]
     return torch.cat([x.contiguous().view(-1) for x in grads])
 
-def hessian(output, inputs, out=None, allow_unused=False, create_graph=False, return_inputs = False):
+
+def hessian(output, inputs, out=None, allow_unused=False, create_graph=False, return_inputs=False):
     '''
     Compute the Hessian of `output` with respect to `inputs`
 
