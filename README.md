@@ -17,7 +17,7 @@ pip install .
 
  ## How to cite?
 
- Paper link coming soon!
+https://arxiv.org/abs/1910.06243
 
  ## Who developed hamiltorch?
 
