@@ -344,18 +344,14 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
     return hamiltonian
 
 def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.EXPLICIT, metric=Metric.HESSIAN):
-    log_prob = log_prob_func(params)
-    # tup = False
-    # if isinstance(log_prob, tuple):
-    #     tup = True
-    #     model_parameters = log_prob[1]
-    #     log_prob = log_prob[0]
-
-    if util.has_nan_or_inf(log_prob):
-        print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
-        raise util.LogProbError()
 
     if sampler == Sampler.HMC:
+        log_prob = log_prob_func(params)
+
+        if util.has_nan_or_inf(log_prob):
+            print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+            raise util.LogProbError()
+
         potential = -log_prob
         if inv_mass is None:
             kinetic = 0.5 * torch.dot(momentum, momentum)
@@ -369,7 +365,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
     elif sampler == Sampler.RMHMC and integrator == Integrator.IMPLICIT:
         hamiltonian = rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric)
     elif sampler == Sampler.RMHMC and integrator == Integrator.EXPLICIT:
-        if params is not list:
+        if type(params) is not list:
             # Therefore first instance of sampler before leapfrog_params
             hamiltonian = 2 * rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric)
         else:
@@ -439,12 +435,16 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
                 leapfrog_params = leapfrog_params[0]
                 leapfrog_momenta = leapfrog_momenta[0]
+                new_ham = hamiltonian([params,params_copy] , [momentum,momentum_copy], log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
+
             else:
                 params = leapfrog_params[-1].detach().requires_grad_()
                 momentum = leapfrog_momenta[-1]
+                new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
 
 
-            new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
+
+            # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
             rho = min(0., acceptance(ham, new_ham))
             if rho >= torch.log(torch.rand(1)):
                 # ret_params.append(params)
