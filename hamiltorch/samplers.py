@@ -530,7 +530,7 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
     return log_prob_func
 
 
-def sample_model(model, x, y, params_init, model_loss='multi_class' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None):
+def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None):
     params_shape_list = []
     params_flattened_list = []
     build_tau = False
@@ -550,7 +550,7 @@ def sample_model(model, x, y, params_init, model_loss='multi_class' ,num_samples
 
     return sample(log_prob_func, params_init, num_samples, num_steps_per_sample, step_size, burn, jitter, normalizing_const, softabs_const, explicit_binding_const, fixed_point_threshold, fixed_point_max_iterations, jitter_max_tries, sampler, integrator, metric, debug)
 
-def predict_model(model, x, y, samples, model_loss='multi_class', tau_out=1., tau_list=None):
+def predict_model(model, x, y, samples, model_loss='multi_class_linear_output', tau_out=1., tau_list=None):
     params_shape_list = []
     params_flattened_list = []
     build_tau = False
