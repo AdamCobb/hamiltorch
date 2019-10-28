@@ -1,5 +1,6 @@
 import unittest
 import torch.nn as nn
+from torch.nn import functional as F
 import hamiltorch.util
 import torch
 
@@ -59,6 +60,39 @@ class UtilTestCase(unittest.TestCase):
 
         self.assertTrue(torch.all(torch.eq(xmodelgrad, xfunctionalgrad)))
         self.assertTrue(torch.all(torch.eq(ymodel, yfunctional)))
+
+    def test_conv_model_functional(self):
+        class Net(nn.Module):
+            def __init__(self):
+                super(Net, self).__init__()
+                self.layers = nn.Sequential(
+                        nn.Conv2d(1, 10, kernel_size=5),
+                        nn.MaxPool2d(2),
+                        nn.ReLU(),
+                        nn.Conv2d(10, 20, kernel_size=5),
+                        nn.MaxPool2d(2),
+                        nn.ReLU())
+                self.fc1 = nn.Linear(320, 50)
+                self.fc2 = nn.Linear(50, 10)
+
+            def forward(self, x):
+                x = self.layers(x)
+                x = x.view(-1, 320)
+                x = F.relu(self.fc1(x))
+                x = self.fc2(x)
+                return F.log_softmax(x, dim=1)
+
+        model = Net()
+        model.eval()
+        eval_fmodel = hamiltorch.util.make_functional(model)
+        model.train()
+        train_fmodel = hamiltorch.util.make_functional(model)
+        # Verify correctness in eval mode
+        model.eval()
+        params = list(model.parameters())
+        x = torch.randn(10, 1, 28, 28)
+
+        self.assertTrue(torch.all(torch.eq(model(x).sum(), train_fmodel(x, params=params).sum())))
 
 
 if __name__ == '__main__':

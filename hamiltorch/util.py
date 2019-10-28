@@ -232,16 +232,33 @@ def jacobian(outputs, inputs, create_graph=False, return_inputs = False):
     else:
         return torch.stack(jac)
 
+def eval_print(*expressions):
+    print('\n\n' + colored(inspect.stack()[1][3], 'white', attrs=['bold']))
+    frame = sys._getframe(1)
+    max_str_length = 0
+    for expression in expressions:
+        if len(expression) > max_str_length:
+            max_str_length = len(expression)
+    for expression in expressions:
+        val = eval(expression, frame.f_globals, frame.f_locals)
+        if isinstance(val, np.ndarray):
+            val = val.tolist()
+        print('  {} = {}'.format(expression.ljust(max_str_length), repr(val)))
 
 #################################################################################
 # Found here: https://gist.github.com/apaszke/4c8ead6f17a781d589f6655692e7f6f0
 #################################################################################
 
 import sys
+import types
 from collections import OrderedDict
 
 PY2 = sys.version_info[0] == 2
 _internal_attrs = {'_backend', '_parameters', '_buffers', '_backward_hooks', '_forward_hooks', '_forward_pre_hooks', '_modules'}
+
+
+### Had to add this for conv net
+_new_methods = {'conv2d_forward'}
 
 
 class Scope(object):
@@ -258,13 +275,15 @@ def _make_functional(module, params_box, params_offset):
         if name in _internal_attrs:
             continue
         setattr(self, name, attr)
-
+    ### Had to add this for conv net (MY ADDITION)
+    for name in dir(module):
+        if name in _new_methods:
+            setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
     child_params_offset = params_offset + num_params
     for name, child in module.named_children():
         child_params_offset, fchild = _make_functional(child, params_box, child_params_offset)
         self._modules[name] = fchild
         setattr(self, name, fchild)
-
     def fmodule(*args, **kwargs):
         for name, param in zip(param_names, params_box[0][params_offset:params_offset + num_params]):
             setattr(self, name, param)
@@ -282,17 +301,3 @@ def make_functional(module):
         return fmodule_internal(*args, **kwargs)
 
     return fmodule
-
-
-def eval_print(*expressions):
-    print('\n\n' + colored(inspect.stack()[1][3], 'white', attrs=['bold']))
-    frame = sys._getframe(1)
-    max_str_length = 0
-    for expression in expressions:
-        if len(expression) > max_str_length:
-            max_str_length = len(expression)
-    for expression in expressions:
-        val = eval(expression, frame.f_globals, frame.f_locals)
-        if isinstance(val, np.ndarray):
-            val = val.tolist()
-        print('  {} = {}'.format(expression.ljust(max_str_length), repr(val)))
