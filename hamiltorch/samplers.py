@@ -282,6 +282,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
 
             ret_params.append(params.clone())
             ret_momenta.append(momentum.clone())
+
         return [ret_params,params_copy], [ret_momenta, momentum_copy]
 
 
@@ -419,6 +420,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     num_rejected = 0
     # if sampler == Sampler.HMC:
     util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
+
     for n in range(num_samples):
         util.progress_bar_update(n)
         try:
