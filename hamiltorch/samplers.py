@@ -115,8 +115,8 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             return p.grad
         ret_params = []
         ret_momenta = []
+        momentum += 0.5 * step_size * params_grad(params)
         for n in range(steps):
-            momentum += 0.5 * step_size * params_grad(params)
             if inv_mass is None:
                 params = params + step_size * momentum
             else:
@@ -125,9 +125,11 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                     params = params + step_size * torch.matmul(inv_mass,momentum.view(-1,1)).view(-1)
                 else:
                     params = params + step_size * inv_mass * momentum
-            momentum += 0.5 * step_size * params_grad(params)
+
+            momentum += step_size * params_grad(params)
             ret_params.append(params.clone())
             ret_momenta.append(momentum.clone())
+        ret_momenta[-1] = ret_momenta[-1] - 0.5 * step_size * params_grad(params.clone())
             # import pdb; pdb.set_trace()
         return ret_params, ret_momenta
     elif sampler == Sampler.RMHMC and (integrator == Integrator.IMPLICIT or integrator == Integrator.S3):
