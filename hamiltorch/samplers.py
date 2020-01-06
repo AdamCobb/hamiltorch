@@ -56,11 +56,12 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
         print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
         raise util.LogProbError()
     if metric == Metric.JACOBIAN_DIAG:
+        raise NotImplementedError()
         # import pdb; pdb.set_trace()
-        jac, params = util.jacobian(log_prob, params, create_graph=True, return_inputs=False)
+        jac = util.jacobian(log_prob, params, create_graph=True, return_inputs=False)
         jac = torch.cat([j.flatten() for j in jac])
         # util.flatten(jac).view(1,-1)
-        fish = torch.matmul(jac.t(),jac).diag().diag() / normalizing_const
+        fish = torch.matmul(jac.view(-1,1),jac.view(1,-1)).diag().diag()/ normalizing_const #.diag().diag() / normalizing_const
     else:
         hess = util.hessian(log_prob.float(), params, create_graph=True, return_inputs=False)
         fish = - hess / normalizing_const
