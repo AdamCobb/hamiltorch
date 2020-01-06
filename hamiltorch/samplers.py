@@ -126,10 +126,12 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 else:
                     params = params + step_size * inv_mass * momentum
 
-            momentum += step_size * params_grad(params)
+            p_grad = params_grad(params)
+            momentum += step_size * p_grad
             ret_params.append(params.clone())
             ret_momenta.append(momentum.clone())
-        ret_momenta[-1] = ret_momenta[-1] - 0.5 * step_size * params_grad(params.clone())
+        # only need last for Hamiltoninian check (see p.14) https://arxiv.org/pdf/1206.1901.pdf
+        ret_momenta[-1] = ret_momenta[-1] - 0.5 * step_size * p_grad.clone()
             # import pdb; pdb.set_trace()
         return ret_params, ret_momenta
     elif sampler == Sampler.RMHMC and (integrator == Integrator.IMPLICIT or integrator == Integrator.S3):
