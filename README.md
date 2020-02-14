@@ -2,6 +2,13 @@
 
 
  PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC)
+ 
+ * Perform HMC in user-defined log probabilities and in PyTorch neural networks (objects inheriting from the `torch.nn.Module`).
+ * Available sampling schemes:
+     * HMC
+     * No-U-Turn Sampler
+     * Implicit RMHMC
+     * Explicit RMHMC
 
  ## How to install
 
@@ -17,7 +24,6 @@ pip install .
 
  ## How to cite?
 
-## Cite as
 
 Please consider citing the following paper if you use `hamiltorch` in your research:
 
