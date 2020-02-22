@@ -13,9 +13,7 @@
  ## How to install
 
 ```
-git clone https://github.com/AdamCobb/hamiltorch.git
-cd hamiltorch
-pip install .
+pip install git+https://github.com/AdamCobb/hamiltorch
 ```
 
  ## How does it work?
