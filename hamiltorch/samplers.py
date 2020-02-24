@@ -552,6 +552,10 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
         elif model_loss is 'regression':
             # crit = nn.MSELoss(reduction='sum')
             ll = - 0.5 * tau_out * ((output - y) ** 2).mean(0)#sum(0)
+           
+        elif callable(model_loss):
+            # Assume defined custom log-likelihood.
+            ll = - model_loss(output, y).mean(0)
         else:
             raise NotImplementedError()
         if predict:
