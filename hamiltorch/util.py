@@ -258,7 +258,7 @@ _internal_attrs = {'_backend', '_parameters', '_buffers', '_backward_hooks', '_f
 
 
 ### Had to add this for conv net
-_new_methods = {'conv2d_forward'}
+_new_methods = {'conv2d_forward','_forward_impl'}
 
 
 class Scope(object):
@@ -266,28 +266,59 @@ class Scope(object):
         self._modules = OrderedDict()
 
 
+# Function keeps looping and turning each module in the network to a function
 def _make_functional(module, params_box, params_offset):
     self = Scope()
     num_params = len(module._parameters)
     param_names = list(module._parameters.keys())
+    # Set dummy variable to bias_None to rename as flag if no bias
+    if 'bias' in param_names and module._parameters['bias'] is None:
+        param_names[-1] = 'bias_None' # Remove last name (hopefully bias) from list
     forward = type(module).forward.__func__ if PY2 else type(module).forward
+    if type(module) == torch.nn.modules.container.Sequential:
+        # Patch sequential model by replacing the forward method
+        forward = Sequential_forward_patch
     for name, attr in module.__dict__.items():
         if name in _internal_attrs:
-            continue
+            continue   #If internal attributes skip
         setattr(self, name, attr)
     ### Had to add this for conv net (MY ADDITION)
     for name in dir(module):
         if name in _new_methods:
-            setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
+            if name == 'conv2d_forward':
+                setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
+            if name == '_forward_impl':
+                setattr(self, name, types.MethodType(type(module)._forward_impl,self))
+
     child_params_offset = params_offset + num_params
     for name, child in module.named_children():
         child_params_offset, fchild = _make_functional(child, params_box, child_params_offset)
-        self._modules[name] = fchild
+        self._modules[name] = fchild  # fchild is functional child
         setattr(self, name, fchild)
     def fmodule(*args, **kwargs):
+
+        # Uncomment below if statement to step through (with 'n') assignment of parameters.
+#         if params_box[0] is not None:
+#             import pdb; pdb.set_trace()
+
+        # If current layer has no bias, insert the corresponding None into params_box
+        # with the params_offset ensuring the correct weight is applied to the right place.
+        if 'bias_None' in param_names:
+            params_box[0].insert(params_offset + 1, None)
         for name, param in zip(param_names, params_box[0][params_offset:params_offset + num_params]):
-            setattr(self, name, param)
-        return forward(self, *args, **kwargs)
+
+            # In order to deal with layers that have no bias:
+            if name == 'bias_None':
+                setattr(self, 'bias', None)
+            else:
+                setattr(self, name, param)
+        # In the forward pass we receive a context object and a Tensor containing the
+        # input; we must return a Tensor containing the output, and we can use the
+        # context object to cache objects for use in the backward pass.
+
+        # When running the kwargs no longer exist as they were put into params_box and therefore forward is just
+        # forward(self, x), so I could comment **kwargs out
+        return forward(self, *args) #, **kwargs)
 
     return child_params_offset, fmodule
 
@@ -297,7 +328,15 @@ def make_functional(module):
     _, fmodule_internal = _make_functional(module, params_box, 0)
 
     def fmodule(*args, **kwargs):
-        params_box[0] = kwargs.pop('params')
+        params_box[0] = kwargs.pop('params') # if key is in the dictionary, remove it and return its value, else return default. If default is not given and key is not in the dictionary, a KeyError is raised.
         return fmodule_internal(*args, **kwargs)
 
     return fmodule
+
+##### PATCH FOR nn.Sequential #####
+
+def Sequential_forward_patch(self, input):
+    # put at top of notebook nn.Sequential.forward = Sequential_forward_patch
+    for label, module in self._modules.items():
+        input = module(input)
+    return input
