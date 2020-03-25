@@ -477,6 +477,9 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             else:
                 num_rejected += 1
                 params = ret_params[-1]
+                if n > burn:
+                    leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
+                    ret_params.extend(leapfrog_params)
                 if debug:
                     print('REJECT')
 
@@ -490,6 +493,9 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         except util.LogProbError:
             num_rejected += 1
             params = ret_params[-1]
+            if n > burn:
+                leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
+                ret_params.extend(leapfrog_params)
             if debug:
                 print('REJECT')
             if NUTS and n <= burn:
@@ -532,17 +538,17 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
         # Sample prior if no data
         if x is None:
             # print('hi')
-            return l_prior/y.shape[0]
+            return l_prior#/y.shape[0]
 
 
         output = fmodel(x,params=params_unflattened)
 
         if model_loss is 'binary_class':
-            crit = nn.BCEWithLogitsLoss(reduction='mean')
+            crit = nn.BCEWithLogitsLoss(reduction='sum')
             ll = - tau_out *(crit(output, y))
         elif model_loss is 'multi_class_linear_output':
     #         crit = nn.MSELoss(reduction='mean')
-            crit = nn.CrossEntropyLoss(reduction='mean')
+            crit = nn.CrossEntropyLoss(reduction='sum')
     #         crit = nn.BCEWithLogitsLoss(reduction='sum')
             ll = - tau_out *(crit(output, y.long().view(-1)))
             # ll = - tau_out *(torch.nn.functional.nll_loss(output, y.long().view(-1)))
@@ -551,17 +557,17 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
 
         elif model_loss is 'regression':
             # crit = nn.MSELoss(reduction='sum')
-            ll = - 0.5 * tau_out * ((output - y) ** 2).mean(0)#sum(0)
-           
+            ll = - 0.5 * tau_out * ((output - y) ** 2).sum(0)#sum(0)
+
         elif callable(model_loss):
             # Assume defined custom log-likelihood.
-            ll = - model_loss(output, y).mean(0)
+            ll = - model_loss(output, y).sum(0)
         else:
             raise NotImplementedError()
         if predict:
-            return ll + l_prior/y.shape[0], output
+            return ll + l_prior, output
         else:
-            return ll + l_prior/y.shape[0]
+            return ll + l_prior
 
     return log_prob_func
 
