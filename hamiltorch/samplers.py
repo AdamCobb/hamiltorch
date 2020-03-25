@@ -479,7 +479,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                 params = ret_params[-1]
                 if n > burn:
                     leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
-                    ret_params.extend(leapfrog_params)
+                    ret_params.extend(leapfrog_params) # append the current sample to the chain
                 if debug:
                     print('REJECT')
 
