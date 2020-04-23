@@ -94,6 +94,20 @@ class UtilTestCase(unittest.TestCase):
 
         self.assertTrue(torch.all(torch.eq(model(x).sum(), train_fmodel(x, params=params).sum())))
 
+    def test_vanilla_HMC_reversible(self):
+        def log_prob(omega):
+            mean = torch.zeros(2)
+            var = torch.tensor([.10,.10])
+            return torch.distributions.MultivariateNormal(mean, torch.diag(var)).log_prob(omega).sum()
+
+        params_init = torch.tensor([1.,1.])
+        momentum_init = torch.tensor([1.,1.])
+        inv_mass = torch.tensor([1.,1.])
+        p,m = hamiltorch.samplers.leapfrog(params_init, momentum_init, log_prob, steps=100, step_size=0.1, jitter=None, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=inv_mass, ham_func=None, sampler=hamiltorch.Sampler.HMC, integrator=hamiltorch.Integrator.EXPLICIT, metric=hamiltorch.Metric.HESSIAN, debug=False)
+        momentum_reversed = - m[-1].clone()
+        p,m = hamiltorch.samplers.leapfrog(p[-1], momentum_reversed, log_prob, steps=100, step_size=0.1, jitter=None, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=inv_mass, ham_func=None, sampler=hamiltorch.Sampler.HMC, integrator=hamiltorch.Integrator.EXPLICIT, metric=hamiltorch.Metric.HESSIAN, debug=False)
+
+        self.assertTrue(torch.all(torch.eq(p[-1], params_init)))
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
