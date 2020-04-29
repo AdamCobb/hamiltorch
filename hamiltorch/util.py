@@ -258,7 +258,7 @@ _internal_attrs = {'_backend', '_parameters', '_buffers', '_backward_hooks', '_f
 
 
 ### Had to add this for conv net
-_new_methods = {'conv2d_forward','_forward_impl'}
+_new_methods = {'conv2d_forward', '_forward_impl', '_conv_forward'}
 
 
 class Scope(object):
@@ -285,6 +285,8 @@ def _make_functional(module, params_box, params_offset):
     ### Had to add this for conv net (MY ADDITION)
     for name in dir(module):
         if name in _new_methods:
+            if name == '_conv_forward': # Patch for pytorch 1.5.0+cu101
+                setattr(self, name, types.MethodType(type(module)._conv_forward,self))
             if name == 'conv2d_forward':
                 setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
             if name == '_forward_impl':
