@@ -1,14 +1,17 @@
 # hamiltorch [![Build Status](https://travis-ci.com/AdamCobb/hamiltorch.svg?token=qJKqovbtw9EzCw99Nvg8&branch=master)](https://travis-ci.com/AdamCobb/hamiltorch)
 
 
- PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC)
- 
+ PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC) and inference in Bayesian neural networks
+
  * Perform HMC in user-defined log probabilities and in PyTorch neural networks (objects inheriting from the `torch.nn.Module`).
  * Available sampling schemes:
      * HMC
-     * No-U-Turn Sampler
+     * No-U-Turn Sampler (currently adapts step-size only)
      * Implicit RMHMC
      * Explicit RMHMC
+     * Symmetric Split HMC
+
+ ## Currently making updates! Please bear with me!
 
  ## How to install
 
@@ -18,13 +21,27 @@ pip install git+https://github.com/AdamCobb/hamiltorch
 
  ## How does it work?
 
- Please refer to my [blog post](https://adamcobb.github.io/journal/hamiltorch.html), or follow the [notebook-style tutorials](https://github.com/AdamCobb/hamiltorch/tree/master/notebooks).  
+ There are currently two blog posts that describe how to use `hamiltorch`:
+
+ * For basic usage and an introduction please refer to my earlier post in 2019 ["hamiltorch: a PyTorch Python package for sampling"](https://adamcobb.github.io/journal/hamiltorch.html)
+ * For a more recent summary and a focus on Bayesian neural networks, please see my post ["Scaling HMC to larger data sets"](https://adamcobb.github.io/journal/hamiltorch.html)
+
+ There are also notebook-style tutorials:
+
+ * [Sampling from generic log probabilities](https://github.com/AdamCobb/hamiltorch/blob/master/notebooks/hamiltorch_log_prob_examples.ipynb)
+ * [Sampling from `torch.nn.Module` (basic)](https://github.com/AdamCobb/hamiltorch/blob/master/notebooks/hamiltorch_Bayesian_NN_example.ipynb)
+ * [Bayesian neural networks and split HMC](https://github.com/AdamCobb/hamiltorch/blob/master/notebooks/hamiltorch_split_HMC_BNN_example.ipynb)
 
  ## How to cite?
 
+Please consider citing the following papers if you use `hamiltorch` in your research:
 
-Please consider citing the following paper if you use `hamiltorch` in your research:
+For symmetric splitting:
+```
+Coming soon!
+```
 
+For RMHMC:
 ```
 @article{cobb2019introducing,
   title={Introducing an Explicit Symplectic Integration Scheme for Riemannian Manifold Hamiltonian Monte Carlo},
@@ -39,3 +56,5 @@ Please consider citing the following paper if you use `hamiltorch` in your resea
  [Adam D Cobb](https://adamcobb.github.io)
 
  [Atılım Güneş Baydin](http://www.robots.ox.ac.uk/~gunes/)
+
+ [Brian Jalaian](https://www.brianjalaian.com)
