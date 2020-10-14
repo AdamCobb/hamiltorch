@@ -26,13 +26,13 @@ check_python_version()
 setup(
     name='hamiltorch',
     version=read_package_variable('__version__'),
-    description='A PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC)',
+    description='A PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC) and inference in Bayesian neural networks',
     author='Adam D. Cobb, Atilim Gunes Baydin',
-    author_email='acobb@robots.ox.ac.uk',
+    author_email='cobb.derek.adam@gmail.com',
     packages=find_packages(),
-    install_requires=['torch>=1.1.0', 'numpy', 'termcolor'],
+    install_requires=['torch>=1.6.0', 'numpy', 'termcolor'],
     url='https://github.com/AdamCobb/hamiltorch',
     classifiers=['Development Status :: 4 - Beta', 'License :: OSI Approved :: BSD License', 'Programming Language :: Python :: 3.5'],
     license='BSD',
-    keywords='pytorch riemannian hamiltonian monte carlo',
+    keywords='pytorch riemannian hamiltonian monte carlo bnn',
 )
