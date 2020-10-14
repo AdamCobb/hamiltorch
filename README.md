@@ -24,7 +24,7 @@ pip install git+https://github.com/AdamCobb/hamiltorch
  There are currently two blog posts that describe how to use `hamiltorch`:
 
  * For basic usage and an introduction please refer to my earlier post in 2019 ["hamiltorch: a PyTorch Python package for sampling"](https://adamcobb.github.io/journal/hamiltorch.html)
- * For a more recent summary and a focus on Bayesian neural networks, please see my post ["Scaling HMC to larger data sets"](https://adamcobb.github.io/journal/hamiltorch.html)
+ * For a more recent summary and a focus on Bayesian neural networks, please see my post ["Scaling HMC to larger data sets"](https://adamcobb.github.io/journal/bnn.html)
 
  There are also notebook-style tutorials:
 
