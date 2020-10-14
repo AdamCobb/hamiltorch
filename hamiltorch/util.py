@@ -258,7 +258,7 @@ _internal_attrs = {'_backend', '_parameters', '_buffers', '_backward_hooks', '_f
 
 
 ### Had to add this for conv net
-_new_methods = {'conv2d_forward', '_forward_impl', '_conv_forward'}
+_new_methods = {'conv2d_forward','_forward_impl', '_check_input_dim', '_conv_forward'}
 
 
 class Scope(object):
@@ -278,6 +278,11 @@ def _make_functional(module, params_box, params_offset):
     if type(module) == torch.nn.modules.container.Sequential:
         # Patch sequential model by replacing the forward method
         forward = Sequential_forward_patch
+    if 'BatchNorm' in module.__class__.__name__:
+        # Patch sequential model by replacing the forward method (hoping applies for all BNs need
+        # to put this in tests)
+        forward = bn_forward_patch
+
     for name, attr in module.__dict__.items():
         if name in _internal_attrs:
             continue   #If internal attributes skip
@@ -291,6 +296,9 @@ def _make_functional(module, params_box, params_offset):
                 setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
             if name == '_forward_impl':
                 setattr(self, name, types.MethodType(type(module)._forward_impl,self))
+            if name == '_check_input_dim': # Batch Norm
+                # import pdb; pdb.set_trace()
+                setattr(self, name, types.MethodType(type(module)._check_input_dim,self))
 
     child_params_offset = params_offset + num_params
     for name, child in module.named_children():
@@ -342,3 +350,17 @@ def Sequential_forward_patch(self, input):
     for label, module in self._modules.items():
         input = module(input)
     return input
+
+##### Patch for batch norm #####
+def bn_forward_patch(self, input):
+    # set running var to None and running mean
+    return torch.nn.functional.batch_norm(
+                input, running_mean = None, running_var = None,
+                weight = self.weight, bias = self.bias,
+                training = self.training,
+                momentum = self.momentum, eps = self.eps)
+
+def gpu_check_delete(string, locals):
+    if string in locals:
+        del locals[string]
+        torch.cuda.empty_cache()
