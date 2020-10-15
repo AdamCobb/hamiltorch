@@ -11,8 +11,6 @@
      * Explicit RMHMC
      * Symmetric Split HMC
 
- ## Currently making updates! Please bear with me!
-
  ## How to install
 
 ```
@@ -38,7 +36,12 @@ Please consider citing the following papers if you use `hamiltorch` in your rese
 
 For symmetric splitting:
 ```
-Coming soon!
+@article{cobb2019introducing,
+  title={Scaling Hamiltonian Monte Carlo Inference for Bayesian Neural Networks with Symmetric Splitting},
+  author={Cobb, Adam D and Jalaian, Brian},
+  journal={arXiv preprint arXiv:2010.06772},
+  year={2020}
+}
 ```
 
 For RMHMC:
