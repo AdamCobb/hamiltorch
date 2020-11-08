@@ -1312,7 +1312,7 @@ def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output
         params_shape_list.append(weights.shape)
         params_flattened_list.append(weights.nelement())
         if build_tau:
-            tau_list.append(1.)
+            tau_list.append(torch.tensor([1.]))
 
     log_prob_func = define_model_log_prob(model, model_loss, x, y, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=normalizing_const,  device = device)
 
@@ -1414,7 +1414,7 @@ def sample_split_model(model, train_loader, params_init, num_splits, model_loss=
         params_shape_list.append(weights.shape)
         params_flattened_list.append(weights.nelement())
         if build_tau:
-            tau_list.append(1.)
+            tau_list.append(torch.tensor([1.]))
 
     log_prob_func = define_split_model_log_prob(model, model_loss, train_loader, num_splits, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, device = device)
 
@@ -1471,7 +1471,7 @@ def predict_model(model, samples, x = None, y = None, test_loader = None, model_
             params_shape_list.append(weights.shape)
             params_flattened_list.append(weights.nelement())
             if build_tau:
-                tau_list.append(1.)
+                tau_list.append(torch.tensor([1.]))
 
         if test_loader.__class__ is torch.utils.data.dataloader.DataLoader:
             # Calc number of batches
