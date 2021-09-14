@@ -12,6 +12,7 @@ class Sampler(Enum):
     HMC = 1
     RMHMC = 2
     HMC_NUTS = 3
+    HMC_CYCLIC = 4
     # IMPORTANCE = 3
     # MH = 4
 
@@ -825,9 +826,37 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
     # if not tup:
     return hamiltonian
 
+def update_cyclic_step_size(init_step_size, total_steps, num_cycles, step_number):
+    """
+    Returns the step size according to Cyclical Stochastic MCMC https://arxiv.org/pdf/1902.03932.pdf
+
+    Parameters
+    ----------
+    init_step_size : float
+        input step size
+    total_steps : int
+        Total number of samples to be generated
+    num_cycles : int
+        number of cyclical rounds
+    step_number : int
+        current step number
+
+    Returns
+    -------
+    float
+        step size to be used in current round
+    """
+    import numpy as np
+    iterations_per_cycle = total_steps // num_cycles
+    cos_out = 1+ np.cos(np.pi 
+                    * (step_number % iterations_per_cycle) 
+                    / iterations_per_cycle)
+    return float(0.5 * 
+                cos_out *
+                init_step_size)
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, num_cycles=1, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -846,6 +875,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         Size of each step to take when doing the numerical integration.
     burn : int
         Number of samples to burn before collecting samples. Set to -1 for no burning of samples. This must be less than `num_samples` as `num_samples` subsumes `burn`.
+    num_cycles : int
+        Number of Cyclical HMC rounds. Only used when the `sampler=Samplers.HMC_CYCLIC`. Default=1
     jitter : float
         Jitter is often added to the diagonal to the metric tensor to ensure it can be inverted.
         `jitter` is a float corresponding to scale of random draws from a uniform distribution.
@@ -902,6 +933,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     if burn >= num_samples:
         raise RuntimeError('burn must be less than num_samples.')
 
+    step_size_init = None
     NUTS = False
     if sampler == Sampler.HMC_NUTS:
         if burn == 0:
@@ -911,6 +943,13 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         step_size_init = step_size
         H_t = 0.
         eps_bar = 1.
+
+    CYCLIC_LR = False
+    if sampler == Sampler.HMC_CYCLIC:
+        sampler = Sampler.HMC
+        CYCLIC_LR = True
+        step_size_init = step_size
+
 
     # Invert mass matrix once (As mass is used in Gibbs resampling step)
     mass = None
@@ -937,6 +976,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     for n in range(num_samples):
         util.progress_bar_update(n)
         try:
+            if CYCLIC_LR:
+                step_size = update_cyclic_step_size(step_size_init, num_samples, num_cycles, n)
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=jitter, normalizing_const=normalizing_const, softabs_const=softabs_const, metric=metric, mass=mass)
 
             ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric, inv_mass=inv_mass)
