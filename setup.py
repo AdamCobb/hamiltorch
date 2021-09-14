@@ -30,7 +30,7 @@ setup(
     author='Adam D. Cobb, Atilim Gunes Baydin',
     author_email='cobb.derek.adam@gmail.com',
     packages=find_packages(),
-    install_requires=['torch>=1.6.0', 'numpy', 'termcolor'],
+    install_requires=['torch>=1.6.0', 'numpy', 'termcolor', 'tqdm>=4.62.2'],
     url='https://github.com/AdamCobb/hamiltorch',
     classifiers=['Development Status :: 4 - Beta', 'License :: OSI Approved :: BSD License', 'Programming Language :: Python :: 3.5'],
     license='BSD',

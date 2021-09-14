@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from enum import Enum
+from tqdm.auto import tqdm
 
 from numpy import pi
 from . import util
@@ -87,7 +88,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
 
     log_prob = log_prob_func(params)
     if util.has_nan_or_inf(log_prob):
-        print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+        tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
         raise util.LogProbError()
     if metric == Metric.JACOBIAN_DIAG:
         # raise NotImplementedError()
@@ -100,7 +101,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
         hess = util.hessian(log_prob.float(), params, create_graph=True, return_inputs=False)
         fish = - hess #/ normalizing_const
     if util.has_nan_or_inf(fish):
-        print('Invalid hessian: {}, params: {}'.format(fish, params))
+        tqdm.write('Invalid hessian: {}, params: {}'.format(fish, params))
         raise util.LogProbError()
     if jitter is not None:
         params_n_elements = fish.shape[0]
@@ -260,7 +261,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             log_prob = log_prob_func(p)
             # log_prob.backward()
             p = collect_gradients(log_prob, p)
-            # print(p.grad.std())
+            # tqdm.write(p.grad.std())
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
             return p.grad
@@ -297,7 +298,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
 
         def fixed_point_momentum(params, momentum):
             momentum_old = momentum.clone()
-            # print('s')
+            # tqdm.write('s')
             for i in range(fixed_point_max_iterations):
                 momentum_prev = momentum.clone()
                 params = params.detach().requires_grad_()
@@ -312,7 +313,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                     params = collect_gradients(ham, params)
                     tries += 1
                     if tries > jitter_max_tries:
-                        print('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                        tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
                         # import pdb; pdb.set_trace()
                         raise util.LogProbError()
                         # import pdb; pdb.set_trace()
@@ -323,7 +324,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 if momenta_diff < fixed_point_threshold:
                     break
             if debug == 1:
-                print('Converged (momentum), iterations: {}, momenta_diff: {}'.format(i, momenta_diff))
+                tqdm.write('Converged (momentum), iterations: {}, momenta_diff: {}'.format(i, momenta_diff))
             return momentum
 
         def fixed_point_params(params, momentum):
@@ -342,7 +343,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 if params_diff < fixed_point_threshold:
                     break
             if debug == 1:
-                print('Converged (params), iterations: {}, params_diff: {}'.format(i, params_diff))
+                tqdm.write('Converged (params), iterations: {}, params_diff: {}'.format(i, params_diff))
             return params
         ret_params = []
         ret_momenta = []
@@ -363,7 +364,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 params = collect_gradients(ham, params)
                 tries += 1
                 if tries > jitter_max_tries:
-                    print('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                    tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
                     raise util.LogProbError()
                     # break
             momentum -= 0.5 * step_size * params.grad
@@ -389,7 +390,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 params = collect_gradients(ham, params)
                 tries += 1
                 if tries > jitter_max_tries:
-                    print('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                    tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
                     raise util.LogProbError()
                     # import pdb; pdb.set_trace()
                     # break
@@ -480,7 +481,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             for n in range(steps):
                 # Symmetric loop to ensure reversible
                 for m in range(M):
-                    # print('p ',n)
+                    # tqdm.write('p ',n)
                     grad = params_grad(params,log_prob_func[m])
                     with torch.no_grad():
                         momentum += 0.5 * step_size * grad
@@ -488,7 +489,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                         if m < M-1:
-                            # print('q ',n)
+                            # tqdm.write('q ',n)
                             if inv_mass is None:
                                 params += (step_size/K_div) * momentum #/normalizing_const
                             else:
@@ -500,7 +501,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                                 else:
                                     params += (step_size/K_div) * inv_mass * momentum #/normalizing_const
                 for m in reversed(range(M)):
-                    # print('p ', n )
+                    # tqdm.write('p ', n )
                     grad = params_grad(params,log_prob_func[m])
                     with torch.no_grad():
                         momentum += 0.5 * step_size * grad
@@ -508,7 +509,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                         if torch.cuda.is_available():
                             torch.cuda.empty_cache()
                         if m > 0:
-                            # print('q ', n-1)
+                            # tqdm.write('q ', n-1)
                             if inv_mass is None:
                                 params += (step_size/K_div) * momentum #/normalizing_const
                             else:
@@ -533,9 +534,9 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 # "Labelling of subsets is randomised for each iteration"
                 # idx = torch.randperm(M)
                 for m in range(M):
-                    # print('p ',n)
+                    # tqdm.write('p ',n)
                     momentum += 0.5 * step_size * params_grad(params, log_prob_func[idx[m]])
-                    # print('q ',n)
+                    # tqdm.write('q ',n)
                     if inv_mass is None:
                         params += (step_size/M) * momentum #/normalizing_const
                     else:
@@ -560,7 +561,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             for n in range(steps):
                 # Symmetric loop to ensure reversible
                 for m in range(M):
-                    # print('p ',n)
+                    # tqdm.write('p ',n)
                     momentum += 0.5 * step_size * params_grad(params,log_prob_func[m])
 
                 if inv_mass is None:
@@ -575,7 +576,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                         params = params + (step_size) * inv_mass * momentum #/normalizing_const
 
                 for m in reversed(range(M)):
-                    # print('p ', n )
+                    # tqdm.write('p ', n )
                     momentum += 0.5 * step_size * params_grad(params,log_prob_func[m])
 
                 ret_params.append(params.clone())
@@ -696,11 +697,11 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
 
     if abs_eigenvalues is not None:
         if util.has_nan_or_inf(fish) or util.has_nan_or_inf(abs_eigenvalues):
-            print('Invalid Fisher: {} , abs_eigenvalues: {}, params: {}'.format(fish, abs_eigenvalues, params))
+            tqdm.write('Invalid Fisher: {} , abs_eigenvalues: {}, params: {}'.format(fish, abs_eigenvalues, params))
             raise util.LogProbError()
     else:
         if util.has_nan_or_inf(fish):
-            print('Invalid Fisher: {}, params: {}'.format(fish, params))
+            tqdm.write('Invalid Fisher: {}, params: {}'.format(fish, params))
             raise util.LogProbError()
 
     if metric == Metric.SOFTABS:
@@ -711,7 +712,7 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
     quadratic_term = torch.matmul(momentum.view(1, -1), fish_inverse_momentum)
     hamiltonian = - log_prob + 0.5 * pi_term + 0.5 * log_det_abs + 0.5 * quadratic_term
     if util.has_nan_or_inf(hamiltonian):
-        print('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
+        tqdm.write('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
         raise util.LogProbError()
 
     return hamiltonian
@@ -762,7 +763,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
             log_prob = log_prob_func(params)
 
             if util.has_nan_or_inf(log_prob):
-                print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+                tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
                 raise util.LogProbError()
 
         elif type(log_prob_func) is list: # I.e. splitting!
@@ -773,7 +774,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
                     log_prob = log_prob + split_log_prob_func(params)
 
                     if util.has_nan_or_inf(log_prob):
-                        print('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+                        tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
                         raise util.LogProbError()
 
 
@@ -815,11 +816,11 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
         fish, abs_eigenvalues = fisher(params, log_prob_func, jitter=jitter, normalizing_const=normalizing_const, softabs_const=softabs_const, metric=metric)
         fish_inverse_momentum = cholesky_inverse(fish, momentum)
         quadratic_term = torch.matmul(momentum.view(1, -1), fish_inverse_momentum)
-        # print((momentum ** 2 *  fish.diag() ** -1).sum() - quadratic_term)
+        # tqdm.write((momentum ** 2 *  fish.diag() ** -1).sum() - quadratic_term)
         hamiltonian = - log_prob + 0.5 * quadratic_term + ham_func(params)
 
         if util.has_nan_or_inf(hamiltonian):
-            print('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
+            tqdm.write('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
             raise util.LogProbError()
     else:
         raise NotImplementedError()
@@ -972,9 +973,13 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
     num_rejected = 0
     # if sampler == Sampler.HMC:
-    util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
+    # util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
+    progress_bar = tqdm(total=num_samples)
     for n in range(num_samples):
-        util.progress_bar_update(n)
+        progress_bar.update()
+        progress_bar.set_description(
+            f"Progress | Rejections = {num_rejected}/{n} ({(float(num_rejected)/max(1, n)):.2f}) |")
+        # util.progress_bar_update(n)
         try:
             if CYCLIC_LR:
                 step_size = update_cyclic_step_size(step_size_init, num_samples, num_cycles, n)
@@ -1011,11 +1016,11 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
-                print('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
+                tqdm.write('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
 
             if rho >= torch.log(torch.rand(1)):
                 if debug == 1:
-                    print('Accept rho: {}'.format(rho))
+                    tqdm.write('Accept rho: {}'.format(rho))
                 if n > burn:
                     if store_on_GPU:
                         ret_params.append(leapfrog_params[-1])
@@ -1034,14 +1039,14 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                         # Store samples on CPU
                         ret_params.append(ret_params[-1].cpu())
                 if debug == 1:
-                    print('REJECT')
+                    tqdm.write('REJECT')
 
             if NUTS and n <= burn:
                 if n < burn:
                     step_size, eps_bar, H_t = adaptation(rho, n, step_size_init, H_t, eps_bar, desired_accept_rate=desired_accept_rate)
                 if n  == burn:
                     step_size = eps_bar
-                    print('Final Adapted Step Size: ',step_size)
+                    tqdm.write('Final Adapted Step Size: ',step_size)
 
             # if not store_on_GPU: # i.e. delete stuff left on GPU
             #     # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
@@ -1062,15 +1067,15 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                     # Store samples on CPU
                     ret_params.append(ret_params[-1].cpu())
             if debug == 1:
-                print('REJECT')
+                tqdm.write('REJECT')
             if NUTS and n <= burn:
-                # print('hi')
+                # tqdm.write('hi')
                 rho = float('nan') # Acceptance rate = 0
-                # print(rho)
+                # tqdm.write(rho)
                 step_size, eps_bar, H_t = adaptation(rho, n, step_size_init, H_t, eps_bar, desired_accept_rate=desired_accept_rate)
             if NUTS and n  == burn:
                 step_size = eps_bar
-                print('Final Adapted Step Size: ',step_size)
+                tqdm.write('Final Adapted Step Size: ',step_size)
 
         if not store_on_GPU: # i.e. delete stuff left on GPU
             # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
@@ -1087,7 +1092,9 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
 
     # import pdb; pdb.set_trace()
-    util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
+    progress_bar.close()
+    tqdm.write(f'Acceptance Rate {1 - num_rejected/num_samples:.2f}')
+    # util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
     elif debug == 2:
@@ -1163,7 +1170,7 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
 
         # Sample prior if no data
         if x is None:
-            # print('hi')
+            # tqdm.write('hi')
             return l_prior/prior_scale
 
         x_device = x.to(device)
@@ -1257,7 +1264,7 @@ def define_split_model_log_prob(model, model_loss, train_loader, num_splits, par
         log_prob_func = define_model_log_prob(model, model_loss, data.clone().to('cpu'), target.clone().to('cpu'), params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=normalizing_const, prior_scale = num_splits, predict = predict, device = device)
         log_prob_list.append(log_prob_func)
 
-    print('Number of splits: ',len(log_prob_list), ' , each of batch size ', train_loader.batch_size, '\n')
+    tqdm.write('Number of splits: ',len(log_prob_list), ' , each of batch size ', train_loader.batch_size, '\n')
     return log_prob_list
 
 
