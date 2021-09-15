@@ -88,7 +88,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
 
     log_prob = log_prob_func(params)
     if util.has_nan_or_inf(log_prob):
-        tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+        tqdm.write(f'Invalid log_prob: {log_prob}, params: {params}')
         raise util.LogProbError()
     if metric == Metric.JACOBIAN_DIAG:
         # raise NotImplementedError()
@@ -101,7 +101,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
         hess = util.hessian(log_prob.float(), params, create_graph=True, return_inputs=False)
         fish = - hess #/ normalizing_const
     if util.has_nan_or_inf(fish):
-        tqdm.write('Invalid hessian: {}, params: {}'.format(fish, params))
+        tqdm.write(f'Invalid hessian: {fish}, params: {params}')
         raise util.LogProbError()
     if jitter is not None:
         params_n_elements = fish.shape[0]
@@ -313,7 +313,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                     params = collect_gradients(ham, params)
                     tries += 1
                     if tries > jitter_max_tries:
-                        tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                        tqdm.write(f'Warning: reached jitter_max_tries {jitter_max_tries}')
                         # import pdb; pdb.set_trace()
                         raise util.LogProbError()
                         # import pdb; pdb.set_trace()
@@ -324,7 +324,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 if momenta_diff < fixed_point_threshold:
                     break
             if debug == 1:
-                tqdm.write('Converged (momentum), iterations: {}, momenta_diff: {}'.format(i, momenta_diff))
+                tqdm.write(f'Converged (momentum), iterations: {i}, momenta_diff: {momenta_diff}')
             return momentum
 
         def fixed_point_params(params, momentum):
@@ -343,7 +343,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 if params_diff < fixed_point_threshold:
                     break
             if debug == 1:
-                tqdm.write('Converged (params), iterations: {}, params_diff: {}'.format(i, params_diff))
+                tqdm.write(f'Converged (params), iterations: {i}, params_diff: {params_diff}')
             return params
         ret_params = []
         ret_momenta = []
@@ -364,7 +364,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 params = collect_gradients(ham, params)
                 tries += 1
                 if tries > jitter_max_tries:
-                    tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                    tqdm.write(f'Warning: reached jitter_max_tries {jitter_max_tries}')
                     raise util.LogProbError()
                     # break
             momentum -= 0.5 * step_size * params.grad
@@ -390,7 +390,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                 params = collect_gradients(ham, params)
                 tries += 1
                 if tries > jitter_max_tries:
-                    tqdm.write('Warning: reached jitter_max_tries {}'.format(jitter_max_tries))
+                    tqdm.write(f'Warning: reached jitter_max_tries {jitter_max_tries}')
                     raise util.LogProbError()
                     # import pdb; pdb.set_trace()
                     # break
@@ -697,11 +697,11 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
 
     if abs_eigenvalues is not None:
         if util.has_nan_or_inf(fish) or util.has_nan_or_inf(abs_eigenvalues):
-            tqdm.write('Invalid Fisher: {} , abs_eigenvalues: {}, params: {}'.format(fish, abs_eigenvalues, params))
+            tqdm.write(f'Invalid Fisher: {fish} , abs_eigenvalues: {abs_eigenvalues}, params: {params}')
             raise util.LogProbError()
     else:
         if util.has_nan_or_inf(fish):
-            tqdm.write('Invalid Fisher: {}, params: {}'.format(fish, params))
+            tqdm.write(f'Invalid Fisher: {fish}, params: {params}')
             raise util.LogProbError()
 
     if metric == Metric.SOFTABS:
@@ -712,7 +712,7 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
     quadratic_term = torch.matmul(momentum.view(1, -1), fish_inverse_momentum)
     hamiltonian = - log_prob + 0.5 * pi_term + 0.5 * log_det_abs + 0.5 * quadratic_term
     if util.has_nan_or_inf(hamiltonian):
-        tqdm.write('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
+        tqdm.write(f'Invalid hamiltonian, log_prob: {log_prob}, params: {params}, momentum: {momentum}')
         raise util.LogProbError()
 
     return hamiltonian
@@ -763,7 +763,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
             log_prob = log_prob_func(params)
 
             if util.has_nan_or_inf(log_prob):
-                tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+                tqdm.write(f'Invalid log_prob: {log_prob}, params: {params}')
                 raise util.LogProbError()
 
         elif type(log_prob_func) is list: # I.e. splitting!
@@ -774,7 +774,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
                     log_prob = log_prob + split_log_prob_func(params)
 
                     if util.has_nan_or_inf(log_prob):
-                        tqdm.write('Invalid log_prob: {}, params: {}'.format(log_prob, params))
+                        tqdm.write(f'Invalid log_prob: {log_prob}, params: {params}')
                         raise util.LogProbError()
 
 
@@ -820,7 +820,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
         hamiltonian = - log_prob + 0.5 * quadratic_term + ham_func(params)
 
         if util.has_nan_or_inf(hamiltonian):
-            tqdm.write('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
+            tqdm.write(f'Invalid hamiltonian, log_prob: {log_prob}, params: {params}, momentum: {momentum}')
             raise util.LogProbError()
     else:
         raise NotImplementedError()
@@ -857,7 +857,7 @@ def update_cyclic_step_size(init_step_size, total_steps, num_cycles, step_number
                 init_step_size)
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, num_cycles=1, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, num_cycles=1, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, return_acceptance_rate=False):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -912,7 +912,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
     store_on_GPU : bool
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
-
+    return_acceptance_rate: bool
+        returns acceptance rate without printing debug statements
     Returns
     -------
     param_samples : list of torch.tensor(s)
@@ -1016,11 +1017,11 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
-                tqdm.write('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
+                tqdm.write(f'Step: {n}, Current Hamiltoninian: {ham}, Proposed Hamiltoninian: {new_ham}')
 
             if rho >= torch.log(torch.rand(1)):
                 if debug == 1:
-                    tqdm.write('Accept rho: {}'.format(rho))
+                    tqdm.write(f'Accept rho: {rho}')
                 if n > burn:
                     if store_on_GPU:
                         ret_params.append(leapfrog_params[-1])
@@ -1046,7 +1047,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                     step_size, eps_bar, H_t = adaptation(rho, n, step_size_init, H_t, eps_bar, desired_accept_rate=desired_accept_rate)
                 if n  == burn:
                     step_size = eps_bar
-                    tqdm.write('Final Adapted Step Size: ',step_size)
+                    tqdm.write(f'Final Adapted Step Size: {step_size}')
 
             # if not store_on_GPU: # i.e. delete stuff left on GPU
             #     # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
@@ -1075,7 +1076,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                 step_size, eps_bar, H_t = adaptation(rho, n, step_size_init, H_t, eps_bar, desired_accept_rate=desired_accept_rate)
             if NUTS and n  == burn:
                 step_size = eps_bar
-                tqdm.write('Final Adapted Step Size: ',step_size)
+                tqdm.write(f'Final Adapted Step Size: {step_size}')
 
         if not store_on_GPU: # i.e. delete stuff left on GPU
             # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
@@ -1097,7 +1098,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     # util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
-    elif debug == 2:
+    elif return_acceptance_rate or debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), 1 - num_rejected/num_samples
     else:
         return list(map(lambda t: t.detach(), ret_params))
@@ -1264,7 +1265,7 @@ def define_split_model_log_prob(model, model_loss, train_loader, num_splits, par
         log_prob_func = define_model_log_prob(model, model_loss, data.clone().to('cpu'), target.clone().to('cpu'), params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=normalizing_const, prior_scale = num_splits, predict = predict, device = device)
         log_prob_list.append(log_prob_func)
 
-    tqdm.write('Number of splits: ',len(log_prob_list), ' , each of batch size ', train_loader.batch_size, '\n')
+        tqdm.write(f'Number of splits: {len(log_prob_list)} , each of batch size {train_loader.batch_size}')
     return log_prob_list
 
 

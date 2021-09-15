@@ -2,7 +2,7 @@ import os
 import sys
 from setuptools import setup, find_packages
 PACKAGE_NAME = 'hamiltorch'
-MINIMUM_PYTHON_VERSION = 3, 5
+MINIMUM_PYTHON_VERSION = 3, 8
 
 
 def check_python_version():
@@ -32,7 +32,7 @@ setup(
     packages=find_packages(),
     install_requires=['torch>=1.6.0', 'numpy', 'termcolor', 'tqdm>=4.62.2'],
     url='https://github.com/AdamCobb/hamiltorch',
-    classifiers=['Development Status :: 4 - Beta', 'License :: OSI Approved :: BSD License', 'Programming Language :: Python :: 3.5'],
+    classifiers=['Development Status :: 4 - Beta', 'License :: OSI Approved :: BSD License', 'Programming Language :: Python :: 3.8'],
     license='BSD',
     keywords='pytorch riemannian hamiltonian monte carlo bnn',
 )
