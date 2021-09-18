@@ -2,8 +2,9 @@ import torch
 import torch.nn as nn
 from enum import Enum
 from tqdm.auto import tqdm
+import numpy as np
 
-from numpy import pi
+from numpy import dtype, pi
 from . import util
 
 # Docstring:
@@ -847,7 +848,6 @@ def update_cyclic_step_size(init_step_size, total_steps, num_cycles, step_number
     float
         step size to be used in current round
     """
-    import numpy as np
     iterations_per_cycle = total_steps // num_cycles
     cos_out = 1+ np.cos(np.pi 
                     * (step_number % iterations_per_cycle) 
@@ -921,8 +921,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         the end of the trajectories.
     step_size : float, optional
         Only returned when debug = 2 and using NUTS. This is the final adapted step size.
-    acc_rate : float, optional
-        Only returned when debug = 2 and not using NUTS. This is the acceptance rate.
+    acc_rate : np.ndarray, optional
+        Only returned when debug = 2 and not using NUTS or if return_acceptance_rate is passed as True. This is the acceptance rate at each sample.
 
     """
 
@@ -973,13 +973,14 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         ret_params = [params.clone()]
 
     num_rejected = 0
+    rejection_indicator = np.zeros(num_samples, dtype=float)
     # if sampler == Sampler.HMC:
     # util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
     progress_bar = tqdm(total=num_samples)
     for n in range(num_samples):
         progress_bar.update()
         progress_bar.set_description(
-            f"Progress | Rejections = {num_rejected}/{n} ({(float(num_rejected)/max(1, n)):.2f}) |")
+            f"Progress | Rejections = {rejection_indicator.sum()}/{n} ({(float(rejection_indicator.sum())/max(1, n)):.2f}) |")
         # util.progress_bar_update(n)
         try:
             if CYCLIC_LR:
@@ -1030,7 +1031,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                         ret_params.append(leapfrog_params[-1].cpu())
                         # ret_params.extend([lp.detach().cpu() for lp in leapfrog_params])
             else:
-                num_rejected += 1
+                rejection_indicator[n] = 1
                 params = ret_params[-1].to(device)
                 if n > burn:
                     # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
@@ -1058,7 +1059,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             #     torch.cuda.empty_cache()
 
         except util.LogProbError:
-            num_rejected += 1
+            rejection_indicator[n] = 1
             params = ret_params[-1].to(device)
             if n > burn:
                 # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
@@ -1094,12 +1095,13 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
     # import pdb; pdb.set_trace()
     progress_bar.close()
-    tqdm.write(f'Acceptance Rate {1 - num_rejected/num_samples:.2f}')
+    tqdm.write(
+        f'Acceptance Rate {1 - rejection_indicator.sum()/num_samples:.2f}')
     # util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
     elif return_acceptance_rate or debug == 2:
-        return list(map(lambda t: t.detach(), ret_params)), 1 - num_rejected/num_samples
+        return list(map(lambda t: t.detach(), ret_params)), 1 - rejection_indicator.cumsum()/num_samples
     else:
         return list(map(lambda t: t.detach(), ret_params))
 
