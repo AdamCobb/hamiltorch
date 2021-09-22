@@ -1101,7 +1101,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
     elif return_acceptance_rate or debug == 2:
-        return list(map(lambda t: t.detach(), ret_params)), 1 - rejection_indicator.cumsum()/num_samples
+        return list(map(lambda t: t.detach(), ret_params)), 1 - rejection_indicator.cumsum()/np.arange(1, num_samples+1)
     else:
         return list(map(lambda t: t.detach(), ret_params))
 
