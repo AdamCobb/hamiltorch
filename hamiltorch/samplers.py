@@ -6,7 +6,7 @@ import numpy as np
 
 from numpy import dtype, pi
 from . import util
-
+from copy import deepcopy
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
 
@@ -857,7 +857,7 @@ def update_cyclic_step_size(init_step_size, total_steps, num_cycles, step_number
                 init_step_size)
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, num_cycles=1, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, return_acceptance_rate=False):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=-1, num_cycles=1, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, return_rejection_indicator=False, call_back_fn = None, call_back_interval = 1):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -912,8 +912,14 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
     store_on_GPU : bool
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
-    return_acceptance_rate: bool
-        returns acceptance rate without printing debug statements
+    return_rejection_indicator: bool
+        returns an acceptance indicator array without printing debug statements
+    call_back_fn : function
+        a function which will be called every `call_back_interval` with the signature 
+        ```call_back_fn(current_parameter, proposal, rejection:bool, current_step_size, sample_id)```
+        Activates after burn
+    call_back_interval : int
+        refer above
     Returns
     -------
     param_samples : list of torch.tensor(s)
@@ -921,8 +927,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         the end of the trajectories.
     step_size : float, optional
         Only returned when debug = 2 and using NUTS. This is the final adapted step size.
-    acc_rate : np.ndarray, optional
-        Only returned when debug = 2 and not using NUTS or if return_acceptance_rate is passed as True. This is the acceptance rate at each sample.
+    rejection_indicator : np.ndarray, optional
+        Only returned when debug = 2 and not using NUTS or if return_rejection_indicator is passed as True. This is the acceptance indicator at each sample.
 
     """
 
@@ -1019,6 +1025,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
                 tqdm.write(f'Step: {n}, Current Hamiltoninian: {ham}, Proposed Hamiltoninian: {new_ham}')
+            
+            proposal = params.detach()
 
             if rho >= torch.log(torch.rand(1)):
                 if debug == 1:
@@ -1042,7 +1050,15 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                         ret_params.append(ret_params[-1].cpu())
                 if debug == 1:
                     tqdm.write('REJECT')
-
+            
+            if call_back_fn is not None  and n > burn and ((n-max(burn,0)) % call_back_interval) == 0:
+                call_back_fn(
+                    ret_params[-2].detach(),
+                    proposal, 
+                    rejection_indicator[n]==True,
+                    step_size,
+                    n)
+            
             if NUTS and n <= burn:
                 if n < burn:
                     step_size, eps_bar, H_t = adaptation(rho, n, step_size_init, H_t, eps_bar, desired_accept_rate=desired_accept_rate)
@@ -1100,8 +1116,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
     # util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
-    elif return_acceptance_rate or debug == 2:
-        return list(map(lambda t: t.detach(), ret_params)), 1 - rejection_indicator.cumsum()/np.arange(1, num_samples+1)
+    elif return_rejection_indicator or debug == 2:
+        return list(map(lambda t: t.detach(), ret_params)), rejection_indicator
     else:
         return list(map(lambda t: t.detach(), ret_params))
 
