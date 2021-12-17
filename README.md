@@ -39,8 +39,8 @@ For symmetric splitting:
 @article{cobb2020scaling,
   title={Scaling Hamiltonian Monte Carlo Inference for Bayesian Neural Networks with Symmetric Splitting},
   author={Cobb, Adam D and Jalaian, Brian},
-  journal={arXiv preprint arXiv:2010.06772},
-  year={2020}
+  journal={Uncertainty in Artificial Intelligence},
+  year={2021}
 }
 ```
 
