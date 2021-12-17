@@ -926,6 +926,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             mass = 1/inv_mass
 
     params = params_init.clone().requires_grad_()
+    param_burn_prev = params_init.clone()
     if not store_on_GPU:
         ret_params = [params.clone().detach().cpu()]
     else:
@@ -981,17 +982,20 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                     else:
                         # Store samples on CPU
                         ret_params.append(leapfrog_params[-1].cpu())
-                        # ret_params.extend([lp.detach().cpu() for lp in leapfrog_params])
+                else:
+                    param_burn_prev = leapfrog_params[-1].to(device)
             else:
                 num_rejected += 1
-                params = ret_params[-1].to(device)
                 if n > burn:
+                    params = ret_params[-1].to(device)
                     # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
                     if store_on_GPU:
                         ret_params.append(ret_params[-1].to(device))
                     else:
                         # Store samples on CPU
                         ret_params.append(ret_params[-1].cpu())
+                else:
+                    params = param_burn_prev
                 if debug == 1:
                     print('REJECT')
 
@@ -1014,12 +1018,15 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
             num_rejected += 1
             params = ret_params[-1].to(device)
             if n > burn:
+                params = ret_params[-1].to(device)
                 # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
                 if store_on_GPU:
                     ret_params.append(ret_params[-1].to(device))
                 else:
                     # Store samples on CPU
                     ret_params.append(ret_params[-1].cpu())
+            else:
+                params = param_burn_prev
             if debug == 1:
                 print('REJECT')
             if NUTS and n <= burn:
