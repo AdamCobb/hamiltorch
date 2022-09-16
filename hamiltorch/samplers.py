@@ -30,7 +30,7 @@ class Metric(Enum):
     SOFTABS = 2
     JACOBIAN_DIAG = 3
 
-def collect_gradients(log_prob, params):
+def collect_gradients(log_prob, params, pass_grad = None):
     """Returns the parameters and the corresponding gradients (params.grad).
 
     Parameters
@@ -39,6 +39,10 @@ def collect_gradients(log_prob, params):
         Tensor shape (1,) which is a function of params (Can also be a tuple where log_prob[0] is the value to be differentiated).
     params : torch.tensor
         Flat vector of model parameters: shape (D,), where D is the dimensionality of the parameters .
+    pass_grad : None or torch.tensor or callable.
+        If set to a torch.tensor, it is used as the gradient  shape: (D,), where D is the number of parameters of the model. If set
+        to callable, it is a function to be called instead of evaluating the gradient directly using autograd. None is default and
+        means autograd is used.
 
     Returns
     -------
@@ -52,6 +56,11 @@ def collect_gradients(log_prob, params):
         params_list = list(log_prob[1])
         params = torch.cat([p.flatten() for p in params_list])
         params.grad = torch.cat([p.grad.flatten() for p in params_list])
+    elif pass_grad is not None:
+        if callable(pass_grad):
+            params.grad = pass_grad(params)
+        else:
+            params.grad = pass_grad
     else:
         params.grad = torch.autograd.grad(log_prob,params)[0]
     return params
@@ -193,7 +202,7 @@ def gibbs(params, sampler=Sampler.HMC, log_prob_func=None, jitter=None, normaliz
     return dist.sample()
 
 
-def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, store_on_GPU = True, debug=False):
+def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, store_on_GPU = True, debug=False, pass_grad = None):
     """This is a rather large function that contains all the various integration schemes used for HMC. Broadly speaking, it takes in the parameters
     and momentum and propose a new set of parameters and momentum. This is a key part of hamiltorch as it covers multiple integration schemes.
 
@@ -241,6 +250,10 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
     debug : int
         This is useful for checking how many iterations RMHMC takes to converge. Set to zero for no print statements.
+    pass_grad : None or torch.tensor or callable.
+        If set to a torch.tensor, it is used as the gradient  shape: (D,), where D is the number of parameters of the model. If set
+        to callable, it is a function to be called instead of evaluating the gradient directly using autograd. None is default and
+        means autograd is used.
 
     Returns
     -------
@@ -258,7 +271,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             p = p.detach().requires_grad_()
             log_prob = log_prob_func(p)
             # log_prob.backward()
-            p = collect_gradients(log_prob, p)
+            p = collect_gradients(log_prob, p, pass_grad)
             # print(p.grad.std())
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
@@ -293,6 +306,8 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         if integrator is not Integrator.S3:
             ham_func = None
             # Else we are doing semi sep and need auxiliary for Riemann version.
+        if pass_grad is not None:
+            raise RuntimeError('Passing user-determined gradients not implemented for RMHMC')
 
         def fixed_point_momentum(params, momentum):
             momentum_old = momentum.clone()
@@ -372,6 +387,9 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         return ret_params, ret_momenta
 
     elif sampler == Sampler.RMHMC and integrator == Integrator.EXPLICIT:
+        if pass_grad is not None:
+            raise RuntimeError('Passing user-determined gradients not implemented for RMHMC')
+
         #During leapfrog define integrator as implict when passing into riemannian_hamiltonian
         leapfrog_hamiltonian_flag = Integrator.IMPLICIT
         def hamAB_grad_params(params,momentum):
@@ -447,6 +465,8 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
     elif sampler == Sampler.HMC and (integrator == Integrator.SPLITTING or integrator == Integrator.SPLITTING_RAND or Integrator.SPLITTING_KMID):
         if type(log_prob_func) is not list:
             raise RuntimeError('For splitting log_prob_func must be list of functions')
+        if pass_grad is not None:
+            raise RuntimeError('Passing user-determined gradients not implemented for splitting')
 
         def params_grad(p,log_prob_func):
             # OLD:
@@ -827,7 +847,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
 
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, pass_grad = None):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -880,6 +900,10 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
     store_on_GPU : bool
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
+    pass_grad : None or torch.tensor or callable.
+        If set to a torch.tensor, it is used as the gradient  shape: (D,), where D is the number of parameters of the model. If set
+        to callable, it is a function to be called instead of evaluating the gradient directly using autograd. None is default and
+        means autograd is used.
 
     Returns
     -------
@@ -942,7 +966,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
             ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric, inv_mass=inv_mass)
 
-            leapfrog_params, leapfrog_momenta = leapfrog(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, steps=num_steps_per_sample, step_size=step_size, inv_mass=inv_mass, jitter=jitter, jitter_max_tries=jitter_max_tries, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, metric=metric, store_on_GPU = store_on_GPU, debug=debug)
+            leapfrog_params, leapfrog_momenta = leapfrog(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, steps=num_steps_per_sample, step_size=step_size, inv_mass=inv_mass, jitter=jitter, jitter_max_tries=jitter_max_tries, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, metric=metric, store_on_GPU = store_on_GPU, debug=debug, pass_grad = pass_grad)
             if sampler == Sampler.RMHMC and integrator == Integrator.EXPLICIT:
 
                 # Step required to remove bias by comparing to Hamiltonian that is not augmented:
@@ -983,7 +1007,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                         # Store samples on CPU
                         ret_params.append(leapfrog_params[-1].cpu())
                 else:
-                    param_burn_prev = leapfrog_params[-1].to(device)
+                    param_burn_prev = leapfrog_params[-1].to(device).clone()
             else:
                 num_rejected += 1
                 if n > burn:
@@ -995,7 +1019,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                         # Store samples on CPU
                         ret_params.append(ret_params[-1].cpu())
                 else:
-                    params = param_burn_prev
+                    params = param_burn_prev.clone()
                 if debug == 1:
                     print('REJECT')
 
@@ -1026,7 +1050,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
                     # Store samples on CPU
                     ret_params.append(ret_params[-1].cpu())
             else:
-                params = param_burn_prev
+                params = param_burn_prev.clone()
             if debug == 1:
                 print('REJECT')
             if NUTS and n <= burn:
