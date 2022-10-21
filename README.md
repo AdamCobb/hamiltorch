@@ -54,6 +54,11 @@ For RMHMC:
 }
 ```
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=AdamCobb/hamiltorch&type=Date)](https://star-history.com/#AdamCobb/hamiltorch&Date)
+
+
  ## Who developed hamiltorch?
 
  [Adam D Cobb](https://adamcobb.github.io)
