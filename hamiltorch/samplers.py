@@ -105,7 +105,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
         # util.flatten(jac).view(1,-1)
         fish = torch.matmul(jac.view(-1,1),jac.view(1,-1)).diag().diag()#/ normalizing_const #.diag().diag() / normalizing_const
     else:
-        hess = util.hessian(log_prob.float(), params, create_graph=True, return_inputs=False)
+        hess = torch.autograd.functional.hessian(log_prob_func, params, create_graph=True)
         fish = - hess #/ normalizing_const
     if util.has_nan_or_inf(fish):
         print('Invalid hessian: {}, params: {}'.format(fish, params))
@@ -116,7 +116,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
     if (metric is Metric.HESSIAN) or (metric is Metric.JACOBIAN_DIAG):
         return fish, None
     elif metric == Metric.SOFTABS:
-        eigenvalues, eigenvectors = torch.symeig(fish, eigenvectors=True)
+        eigenvalues, eigenvectors = torch.linalg.eigh(fish, UPLO='L')
         abs_eigenvalues = (1./torch.tanh(softabs_const * eigenvalues)) * eigenvalues
         fish = torch.matmul(eigenvectors, torch.matmul(abs_eigenvalues.diag(), eigenvectors.t()))
         return fish, abs_eigenvalues
@@ -143,9 +143,9 @@ def cholesky_inverse(fish, momentum):
         Returns the inverted matrix multiplied by the vector.
 
     """
-    lower = torch.cholesky(fish)
-    y = torch.triangular_solve(momentum.view(-1, 1), lower, upper=False, transpose=False, unitriangular=False)[0]
-    fish_inv_p = torch.triangular_solve(y, lower.t(), upper=True, transpose=False, unitriangular=False)[0]
+    lower = torch.linalg.cholesky(fish)
+    y = torch.linalg.solve_triangular(lower, momentum.view(-1, 1), upper=False, unitriangular=False)
+    fish_inv_p = torch.linalg.solve_triangular(lower.t(), y, upper=True, unitriangular=False)
     return fish_inv_p
 
 
@@ -1162,19 +1162,19 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
 
         output = fmodel(x_device, params=params_unflattened)
 
-        if model_loss is 'binary_class_linear_output':
+        if model_loss == 'binary_class_linear_output':
             crit = nn.BCEWithLogitsLoss(reduction='sum')
             ll = - tau_out *(crit(output, y_device))
-        elif model_loss is 'multi_class_linear_output':
+        elif model_loss == 'multi_class_linear_output':
     #         crit = nn.MSELoss(reduction='mean')
             crit = nn.CrossEntropyLoss(reduction='sum')
     #         crit = nn.BCEWithLogitsLoss(reduction='sum')
             ll = - tau_out *(crit(output, y_device.long().view(-1)))
             # ll = - tau_out *(torch.nn.functional.nll_loss(output, y.long().view(-1)))
-        elif model_loss is 'multi_class_log_softmax_output':
+        elif model_loss == 'multi_class_log_softmax_output':
             ll = - tau_out *(torch.nn.functional.nll_loss(output, y_device.long().view(-1)))
 
-        elif model_loss is 'regression':
+        elif model_loss == 'regression':
             # crit = nn.MSELoss(reduction='sum')
             ll = - 0.5 * tau_out * ((output - y_device) ** 2).sum(0)#sum(0)
 
