@@ -258,7 +258,9 @@ _internal_attrs = {'_backend', '_parameters', '_buffers', '_backward_hooks', '_f
 
 
 ### Had to add this for conv net
-_new_methods = {'conv2d_forward','_forward_impl', '_check_input_dim', '_conv_forward'}
+_new_methods = {'conv2d_forward','_forward_impl', '_check_input_dim', '_conv_forward',
+                'check_forward_args', 'check_input', 'check_hidden_size', "get_expected_hidden_size",
+                "get_expected_cell_size", "permute_hidden"}
 
 
 class Scope(object):
@@ -296,6 +298,18 @@ def _make_functional(module, params_box, params_offset):
                 setattr(self, name, types.MethodType(type(module).conv2d_forward,self))
             if name == '_forward_impl':
                 setattr(self, name, types.MethodType(type(module)._forward_impl,self))
+            if name == 'check_forward_args':
+                setattr(self, name, types.MethodType(type(module).check_forward_args,self))
+            if name == 'check_input':
+                setattr(self, name, types.MethodType(type(module).check_input,self))
+            if name == 'check_hidden_size':
+                setattr(self, name, types.MethodType(type(module).check_hidden_size,self))
+            if name == 'get_expected_hidden_size':
+                setattr(self, name, types.MethodType(type(module).get_expected_hidden_size,self))
+            if name == 'get_expected_cell_size':
+                setattr(self, name, types.MethodType(type(module).get_expected_cell_size,self))
+            if name == 'permute_hidden':
+                setattr(self, name, types.MethodType(type(module).permute_hidden,self))
             if name == '_check_input_dim': # Batch Norm
                 # import pdb; pdb.set_trace()
                 setattr(self, name, types.MethodType(type(module)._check_input_dim,self))
