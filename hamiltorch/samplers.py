@@ -26,9 +26,8 @@ class Integrator(Enum):
 
 
 class Metric(Enum):
-    HESSIAN = 1
-    SOFTABS = 2
-    JACOBIAN_DIAG = 3
+    JACOBIAN_DIAG = 0
+    SOFTABS = 1
 
 def collect_gradients(log_prob, params, pass_grad = None):
     """Returns the parameters and the corresponding gradients (params.grad).
@@ -66,7 +65,7 @@ def collect_gradients(log_prob, params, pass_grad = None):
     return params
 
 
-def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softabs_const=1e6, metric=Metric.HESSIAN):
+def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softabs_const=1e6, metric=Metric.SOFTABS):
     """Called upon when using RMHMC. Returns the Fisher Information Matrix or Metric (often referred to as G).
 
     Parameters
@@ -82,7 +81,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
     softabs_const : float
         Controls the "filtering" strength of the negative eigenvalues. Large values -> absolute value. See Betancourt 2013.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
 
     Returns
     -------
@@ -113,7 +112,7 @@ def fisher(params, log_prob_func=None, jitter=None, normalizing_const=1., softab
     if jitter is not None:
         params_n_elements = fish.shape[0]
         fish += (torch.eye(params_n_elements) * torch.rand(params_n_elements) * jitter).to(fish.device)
-    if (metric is Metric.HESSIAN) or (metric is Metric.JACOBIAN_DIAG):
+    if metric is Metric.JACOBIAN_DIAG:
         return fish, None
     elif metric == Metric.SOFTABS:
         eigenvalues, eigenvectors = torch.linalg.eigh(fish, UPLO='L')
@@ -149,7 +148,7 @@ def cholesky_inverse(fish, momentum):
     return fish_inv_p
 
 
-def gibbs(params, sampler=Sampler.HMC, log_prob_func=None, jitter=None, normalizing_const=1., softabs_const=None, mass=None, metric=Metric.HESSIAN):
+def gibbs(params, sampler=Sampler.HMC, log_prob_func=None, jitter=None, normalizing_const=1., softabs_const=None, mass=None, metric=Metric.SOFTABS):
     """Performs the momentum resampling component of HMC.
 
     Parameters
@@ -171,7 +170,7 @@ def gibbs(params, sampler=Sampler.HMC, log_prob_func=None, jitter=None, normaliz
         to either a diagonal matrix, via a torch tensor of shape (D,), or a full square matrix of shape (D,D). There is also the capability for some
         integration schemes to implement the mass matrix as a list of blocks. Hope to make that more efficient.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
 
     Returns
     -------
@@ -202,7 +201,7 @@ def gibbs(params, sampler=Sampler.HMC, log_prob_func=None, jitter=None, normaliz
     return dist.sample()
 
 
-def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, store_on_GPU = True, debug=False, pass_grad = None):
+def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-20, fixed_point_max_iterations=6, jitter_max_tries=10, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.SOFTABS, store_on_GPU = True, debug=False, pass_grad = None):
     """This is a rather large function that contains all the various integration schemes used for HMC. Broadly speaking, it takes in the parameters
     and momentum and propose a new set of parameters and momentum. This is a key part of hamiltorch as it covers multiple integration schemes.
 
@@ -245,7 +244,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
     store_on_GPU : bool
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
     debug : int
@@ -674,7 +673,7 @@ def adaptation(rho, t, step_size_init, H_t, eps_bar, desired_accept_rate=0.8):
     return step_size, eps_bar, H_t
 
 
-def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, softabs_const=1e6, sampler=Sampler.HMC, integrator=Integrator.EXPLICIT, metric=Metric.HESSIAN):
+def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, softabs_const=1e6, sampler=Sampler.HMC, integrator=Integrator.EXPLICIT, metric=Metric.SOFTABS):
     """Compute the Hamiltonian (non-separable) for RMHMC.
 
     Parameters
@@ -698,7 +697,7 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
 
     Returns
     -------
@@ -735,7 +734,7 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
 
     return hamiltonian
 
-def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.EXPLICIT, metric=Metric.HESSIAN):
+def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, inv_mass=None, ham_func=None, sampler=Sampler.HMC, integrator=Integrator.EXPLICIT, metric=Metric.SOFTABS):
     """Computes the Hamiltonian as a function of the parameters and the momentum.
 
     Parameters
@@ -767,7 +766,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
 
     Returns
     -------
@@ -847,7 +846,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
 
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, pass_grad = None):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=1e6, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.SOFTABS, debug=False, desired_accept_rate=0.8, store_on_GPU = True, pass_grad = None):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -891,7 +890,7 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
     debug : {0, 1, 2}
         Debug mode can take 3 options. Setting debug = 0 (default) allows the sampler to run as normal. Setting debug = 1 prints both the old and new Hamiltonians per iteration,
         and also prints the convergence values when using the generalised leapfrog (IMPLICIT RMHMC). Setting debug = 2, ensures an additional float is returned corresponding
@@ -1251,7 +1250,7 @@ def define_split_model_log_prob(model, model_loss, train_loader, num_splits, par
     return log_prob_list
 
 
-def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
+def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.SOFTABS, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
     """Sample weights from a NN model to perform inference. This function builds a log_prob_func from the torch.nn.Module and passes it to `hamiltorch.sample`.
 
     Parameters
@@ -1306,7 +1305,7 @@ def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
     debug : {0, 1, 2}
         Debug mode can take 3 options. Setting debug = 0 (default) allows the sampler to run as normal. Setting debug = 1 prints both the old and new Hamiltonians per iteration,
         and also prints the convergence values when using the generalised leapfrog (IMPLICIT RMHMC). Setting debug = 2, ensures an additional float is returned corresponding
@@ -1352,7 +1351,7 @@ def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output
 
     return sample(log_prob_func, params_init, num_samples=num_samples, num_steps_per_sample=num_steps_per_sample, step_size=step_size, burn=burn, jitter=jitter, inv_mass=inv_mass, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, jitter_max_tries=jitter_max_tries, sampler=sampler, integrator=integrator, metric=metric, debug=debug, desired_accept_rate=desired_accept_rate, store_on_GPU = store_on_GPU)
 
-def sample_split_model(model, train_loader, params_init, num_splits, model_loss='multi_class_linear_output', num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.SPLITTING, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
+def sample_split_model(model, train_loader, params_init, num_splits, model_loss='multi_class_linear_output', num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.SPLITTING, metric=Metric.SOFTABS, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
     """Sample weights from a NN model to perform inference.
 
     Parameters
@@ -1407,7 +1406,7 @@ def sample_split_model(model, train_loader, params_init, num_splits, model_loss=
         Sets the type of integrator to be used for the leapfrog: Choice {Integrator.EXPLICIT, Integrator.IMPLICIT, Integrator.SPLITTING,
         Integrator.SPLITTING_RAND, Integrator.SPLITTING_KMID}.
     metric : Metric
-        Determines the metric to be used for RMHMC. E.g. default is the Hessian hamiltorch.Metric.HESSIAN.
+        Determines the metric to be used for RMHMC. E.g. default is hamiltorch.Metric.SOFTABS.
     debug : {0, 1, 2}
         Debug mode can take 3 options. Setting debug = 0 (default) allows the sampler to run as normal. Setting debug = 1 prints both the old and new Hamiltonians per iteration,
         and also prints the convergence values when using the generalised leapfrog (IMPLICIT RMHMC). Setting debug = 2, ensures an additional float is returned corresponding
