@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from enum import Enum
 
-from numpy import pi
 from . import util
 
 # Docstring:
@@ -707,8 +706,6 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
     """
 
     log_prob = log_prob_func(params)
-    ndim = params.nelement()
-    pi_term = ndim * torch.log(2.*torch.tensor(pi))
 
     fish, abs_eigenvalues = fisher(params, log_prob_func, jitter=jitter, normalizing_const=normalizing_const, softabs_const=softabs_const, metric=metric)
 
@@ -727,7 +724,7 @@ def rm_hamiltonian(params, momentum, log_prob_func, jitter, normalizing_const, s
         log_det_abs = torch.slogdet(fish)[1]
     fish_inverse_momentum = cholesky_inverse(fish, momentum)
     quadratic_term = torch.matmul(momentum.view(1, -1), fish_inverse_momentum)
-    hamiltonian = - log_prob + 0.5 * pi_term + 0.5 * log_det_abs + 0.5 * quadratic_term
+    hamiltonian = - log_prob + 0.5 * log_det_abs + 0.5 * quadratic_term
     if util.has_nan_or_inf(hamiltonian):
         print('Invalid hamiltonian, log_prob: {}, params: {}, momentum: {}'.format(log_prob, params, momentum))
         raise util.LogProbError()
@@ -828,8 +825,6 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
             hamiltonian = HA + HB + explicit_binding_const * HC
     elif sampler == Sampler.RMHMC and integrator == Integrator.S3: # CURRENTLY ASSUMING DIAGONAL
         log_prob = log_prob_func(params)
-        ndim = params.nelement()
-        pi_term = ndim * torch.log(2.*torch.tensor(pi))
         fish, abs_eigenvalues = fisher(params, log_prob_func, jitter=jitter, normalizing_const=normalizing_const, softabs_const=softabs_const, metric=metric)
         fish_inverse_momentum = cholesky_inverse(fish, momentum)
         quadratic_term = torch.matmul(momentum.view(1, -1), fish_inverse_momentum)
