@@ -847,7 +847,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
 
 
 
-def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, pass_grad = None):
+def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, jitter=None, inv_mass=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, desired_accept_rate=0.8, store_on_GPU = True, pass_grad = None, verbose = False):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
      which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
      sampled.
@@ -904,6 +904,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
         If set to a torch.tensor, it is used as the gradient  shape: (D,), where D is the number of parameters of the model. If set
         to callable, it is a function to be called instead of evaluating the gradient directly using autograd. None is default and
         means autograd is used.
+    verbose : bool
+        If set to true then do not display loading bar
 
     Returns
     -------
@@ -958,9 +960,11 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
     num_rejected = 0
     # if sampler == Sampler.HMC:
-    util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
+    if not verbose:
+        util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
     for n in range(num_samples):
-        util.progress_bar_update(n)
+        if not verbose:
+            util.progress_bar_update(n)
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=jitter, normalizing_const=normalizing_const, softabs_const=softabs_const, metric=metric, mass=mass)
 
@@ -1077,7 +1081,8 @@ def sample(log_prob_func, params_init, num_samples=10, num_steps_per_sample=10, 
 
 
     # import pdb; pdb.set_trace()
-    util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
+    if not verbose:
+        util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if NUTS and debug == 2:
         return list(map(lambda t: t.detach(), ret_params)), step_size
     elif debug == 2:
@@ -1195,7 +1200,7 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
 
     return log_prob_func
 
-def define_split_model_log_prob(model, model_loss, train_loader, num_splits, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, device = 'cpu'):
+def define_split_model_log_prob(model, model_loss, train_loader, num_splits, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, device = 'cpu', verbose = False):
     """This function defines the list of log_prob_func's to be used for splitting. It follows the same formulation as `define_model_log_prob`, except
     it will split the log_prob_func according to data subsets.
 
@@ -1232,6 +1237,8 @@ def define_split_model_log_prob(model, model_loss, train_loader, num_splits, par
         to return.
     device : name of device, or {'gpu', 'cpu'}
         The device to run on.
+    verbose : bool
+        If set to true then do not display loading bar.
 
     Returns
     -------
@@ -1246,12 +1253,12 @@ def define_split_model_log_prob(model, model_loss, train_loader, num_splits, par
             break
         log_prob_func = define_model_log_prob(model, model_loss, data.clone().to('cpu'), target.clone().to('cpu'), params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=normalizing_const, prior_scale = num_splits, predict = predict, device = device)
         log_prob_list.append(log_prob_func)
-
-    print('Number of splits: ',len(log_prob_list), ' , each of batch size ', train_loader.batch_size, '\n')
+    if not verbose:
+        print('Number of splits: ',len(log_prob_list), ' , each of batch size ', train_loader.batch_size, '\n')
     return log_prob_list
 
 
-def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
+def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output' ,num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.IMPLICIT, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8, verbose = False):
     """Sample weights from a NN model to perform inference. This function builds a log_prob_func from the torch.nn.Module and passes it to `hamiltorch.sample`.
 
     Parameters
@@ -1319,6 +1326,8 @@ def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
     desired_accept_rate : float
         Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
+    verbose : bool
+        If set to true then do not display loading bar.
 
     Returns
     -------
@@ -1350,9 +1359,9 @@ def sample_model(model, x, y, params_init, model_loss='multi_class_linear_output
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    return sample(log_prob_func, params_init, num_samples=num_samples, num_steps_per_sample=num_steps_per_sample, step_size=step_size, burn=burn, jitter=jitter, inv_mass=inv_mass, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, jitter_max_tries=jitter_max_tries, sampler=sampler, integrator=integrator, metric=metric, debug=debug, desired_accept_rate=desired_accept_rate, store_on_GPU = store_on_GPU)
+    return sample(log_prob_func, params_init, num_samples=num_samples, num_steps_per_sample=num_steps_per_sample, step_size=step_size, burn=burn, jitter=jitter, inv_mass=inv_mass, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, jitter_max_tries=jitter_max_tries, sampler=sampler, integrator=integrator, metric=metric, debug=debug, desired_accept_rate=desired_accept_rate, store_on_GPU = store_on_GPU, verbose = verbose)
 
-def sample_split_model(model, train_loader, params_init, num_splits, model_loss='multi_class_linear_output', num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.SPLITTING, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8):
+def sample_split_model(model, train_loader, params_init, num_splits, model_loss='multi_class_linear_output', num_samples=10, num_steps_per_sample=10, step_size=0.1, burn=0, inv_mass=None, jitter=None, normalizing_const=1., softabs_const=None, explicit_binding_const=100, fixed_point_threshold=1e-5, fixed_point_max_iterations=1000, jitter_max_tries=10, sampler=Sampler.HMC, integrator=Integrator.SPLITTING, metric=Metric.HESSIAN, debug=False, tau_out=1.,tau_list=None, store_on_GPU = True, desired_accept_rate=0.8, verbose = False):
     """Sample weights from a NN model to perform inference.
 
     Parameters
@@ -1420,6 +1429,8 @@ def sample_split_model(model, train_loader, params_init, num_splits, model_loss=
         Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
     desired_accept_rate : float
         Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
+    verbose : bool
+        If set to true then do not display loading bar.
 
     Returns
     -------
@@ -1447,14 +1458,14 @@ def sample_split_model(model, train_loader, params_init, num_splits, model_loss=
         if build_tau:
             tau_list.append(torch.tensor(1.))
 
-    log_prob_func = define_split_model_log_prob(model, model_loss, train_loader, num_splits, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, device = device)
+    log_prob_func = define_split_model_log_prob(model, model_loss, train_loader, num_splits, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, device = device, verbose=verbose)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    return sample(log_prob_func, params_init, num_samples=num_samples, num_steps_per_sample=num_steps_per_sample, step_size=step_size, burn=burn, jitter=jitter, inv_mass=inv_mass, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, jitter_max_tries=jitter_max_tries, sampler=sampler, integrator=integrator, metric=metric, debug=debug, desired_accept_rate=desired_accept_rate, store_on_GPU = store_on_GPU)
+    return sample(log_prob_func, params_init, num_samples=num_samples, num_steps_per_sample=num_steps_per_sample, step_size=step_size, burn=burn, jitter=jitter, inv_mass=inv_mass, normalizing_const=normalizing_const, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, fixed_point_threshold=fixed_point_threshold, fixed_point_max_iterations=fixed_point_max_iterations, jitter_max_tries=jitter_max_tries, sampler=sampler, integrator=integrator, metric=metric, debug=debug, desired_accept_rate=desired_accept_rate, store_on_GPU = store_on_GPU, verbose = verbose)
 
-def predict_model(model, samples, x = None, y = None, test_loader = None, model_loss='multi_class_linear_output', tau_out=1., tau_list=None):
+def predict_model(model, samples, x = None, y = None, test_loader = None, model_loss='multi_class_linear_output', tau_out=1., tau_list=None, verbose=False):
     """Function used to make predictions given model samples. Note that either a data loader can be passed in, or two tensors (x,y) but make sure
     not to pass in both.
 
@@ -1482,6 +1493,8 @@ def predict_model(model, samples, x = None, y = None, test_loader = None, model_
         Only relevant for model_loss = 'regression' (otherwise leave as 1.0). This corresponds the likelihood output precision.
     tau_list : torch.tensor
         A tensor containing the corresponding prior precision for each set of per layer parameters. This is assuming a Gaussian prior.
+    verbose : bool
+        If set to true then do not display loading bar.
 
     Returns
     -------
@@ -1511,7 +1524,7 @@ def predict_model(model, samples, x = None, y = None, test_loader = None, model_
             else:
                 num_batches = int(round(len(test_loader.dataset)/ test_loader.batch_size) + 1)
 
-            log_prob_list = define_split_model_log_prob(model, model_loss, test_loader, num_batches, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=True, device = samples[0].device)
+            log_prob_list = define_split_model_log_prob(model, model_loss, test_loader, num_batches, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=True, device = samples[0].device, verbose = verbose)
 
             pred_log_prob_list = []
             pred_list = []
