@@ -5,6 +5,7 @@ from termcolor import colored
 import inspect
 import random
 import sys
+import concurrent.futures
 
 
 def set_random_seed(seed=None):
@@ -378,3 +379,27 @@ def gpu_check_delete(string, locals):
     if string in locals:
         del locals[string]
         torch.cuda.empty_cache()
+
+########## For parallel sampling (not checked with GPU)
+
+def setup_chain(sampler, prior, kwargs):
+    def chain(seed):
+        torch.manual_seed(seed)
+        params_init = prior()
+        return sampler(params_init = params_init, **kwargs)
+    return chain
+
+def multi_chain(chain, num_workers, seeds, parallel = False):
+
+    if parallel:
+        # Create a ThreadPoolExecutor to manage the worker threads
+        with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+            # Submit the tasks to the executor and collect the results
+            results = list(executor.map(chain, seeds))
+    else:
+        # Sequential
+        results = []
+        for s in seeds:
+            results.append(chain(s))
+
+    return results
