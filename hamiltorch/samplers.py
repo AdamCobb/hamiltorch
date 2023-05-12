@@ -1140,7 +1140,7 @@ def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params
     fmodel = util.make_functional(model)
     dist_list = []
     for tau in tau_list:
-        dist_list.append(torch.distributions.Normal(torch.zeros_like(tau_list[0]), tau**-0.5))
+        dist_list.append(torch.distributions.Normal(torch.zeros_like(tau), tau**-0.5))
 
     def log_prob_func(params):
         # model.zero_grad()
