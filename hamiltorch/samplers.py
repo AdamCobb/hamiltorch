@@ -607,7 +607,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         raise NotImplementedError()
 
 
-def leapfrog_hmc(params, momentum, log_prob_func, steps = 10, step_size = 0.1, store_on_GPU = True, debug = False, pass_grad = None):
+def leapfrog_hmc(params, momentum, log_prob_func, steps = 10, step_size = 0.1, pass_grad = None):
         def params_grad(p):
             p = p.detach().requires_grad_()
             log_prob = log_prob_func(p)
@@ -1200,7 +1200,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
             ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
             leapfrog_params, leapfrog_momenta, leapfrog_grad = leapfrog_hmc(params, momentum, log_prob_func, steps=num_steps_per_sample, 
-                                                         step_size=step_size,  store_on_GPU = store_on_GPU, debug=debug, pass_grad = pass_grad)
+                                                         step_size=step_size, pass_grad = pass_grad)
             param_trajectories.append(torch.stack(leapfrog_params,axis=0))
             gradient_trajectories.append(torch.stack(leapfrog_grad, axis = 0))
             params = leapfrog_params[-1].to(device).detach().requires_grad_()
@@ -1258,7 +1258,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
     X = torch.stack(param_trajectories, axis = 0)
     y = torch.stack(gradient_trajectories, axis = 0)
     dims = X.shape[1]
-    fitted_model = train( NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X, y, epochs = 30)
+    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X, y, epochs = 30)
     
     return sample(log_prob_func, params_init=params, num_samples=num_samples - burn, num_steps_per_sample=num_steps_per_sample, step_size=step_size,
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
