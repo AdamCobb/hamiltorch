@@ -1255,8 +1255,8 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
 
     ###### this is where we train our surrogate model 
     ### we can overfit 
-    X = torch.stack(param_trajectories, axis = 0)
-    y = torch.stack(gradient_trajectories, axis = 0)
+    X = torch.cat(param_trajectories)
+    y = torch.cat(gradient_trajectories)
     dims = X.shape[1]
     fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X, y, epochs = 30)
     
