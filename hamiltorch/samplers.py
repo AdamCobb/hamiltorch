@@ -4,7 +4,7 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, NNEnergy
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy
 
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -621,8 +621,8 @@ def leapfrog_hmc(params, momentum, log_prob_func, steps = 10, step_size = 0.1, p
        
         ret_params = []
         ret_momenta = []
-        ret_grad = [params_grad(params)]
-        momentum += 0.5 * step_size * ret_grad[-1]
+        ret_grad = []
+        momentum += 0.5 * step_size * params_grad(params)
         for n in range(steps):
             params = params + step_size * momentum #/normalizing_const
             p_grad = params_grad(params)
@@ -636,12 +636,11 @@ def leapfrog_hmc(params, momentum, log_prob_func, steps = 10, step_size = 0.1, p
         return ret_params, ret_momenta, ret_grad
 
 def approximate_leapfrog_hmc(params, momentum, leapfrog_model: HNNODE, steps = 10, step_size = 0.1):
-    dims = params.shape[1]
-    initial_values = torch.cat([params, momentum], axis = 1)
+    dims = params.shape[0]
+    initial_values = torch.cat([params, momentum])[None,:]
     t = torch.linspace(start = 0, end = steps*step_size, steps=steps)
     with torch.no_grad():
-        _, leapfrog_values = leapfrog_model.forward(t, initial_values)
-
+        _, leapfrog_values = leapfrog_model.forward(initial_values, t)
     return leapfrog_values[:,:,:dims], leapfrog_values[:,:,dims:2*dims]
 
 def acceptance(h_old, h_new):
@@ -1211,6 +1210,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
 
             leapfrog_params, leapfrog_momenta, leapfrog_grad = leapfrog_hmc(params, momentum, log_prob_func, steps=num_steps_per_sample, 
                                                          step_size=step_size, pass_grad = pass_grad)
+            
             param_trajectories.append(torch.stack(leapfrog_params,axis=0))
             gradient_trajectories.append(torch.stack(leapfrog_grad, axis = 0))
             params = leapfrog_params[-1].to(device).detach().requires_grad_()
@@ -1268,7 +1268,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
     X = torch.cat(param_trajectories)
     y = torch.cat(gradient_trajectories)
     dims = X.shape[1]
-    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X, y, epochs = 30)
+    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X.detach(), y.detach(), epochs = 30)
     
     return sample(log_prob_func, params_init=params, num_samples=num_samples - burn, num_steps_per_sample=num_steps_per_sample, step_size=step_size,
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
@@ -1347,6 +1347,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     param_trajectories = []
     momentum_trajectories = []
+    param_traj_inits = []
+    momentum_traj_inits = []
     for n in range(burn):
         if verbose:
             util.progress_bar_update(n)
@@ -1359,6 +1361,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
                                                          step_size=step_size, pass_grad = pass_grad)
             param_trajectories.append(torch.stack(leapfrog_params,axis=0))
             momentum_trajectories.append(torch.stack(leapfrog_momenta, axis = 0))
+            param_traj_inits.append(leapfrog_params[0])
+            momentum_traj_inits.append(leapfrog_momenta[0])
             params = leapfrog_params[-1].to(device).detach().requires_grad_()
             momentum = leapfrog_momenta[-1].to(device)
             new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
@@ -1411,10 +1415,11 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     ###### this is where we train our surrogate model 
     ### we can overfit 
-    y = torch.stack(param_trajectories, axis = 0)
-    X = torch.stack([torch.cat([traj_param[0,:], traj_mom[0,:]], axis = 1) for traj_param, traj_mom in zip(param_trajectories, momentum_trajectories)], axis = 0)
+    y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = 2)
+    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
+    t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
-    fitted_model = train(HNNODE(HNN(NNEnergy(dims, 2*dims))), X, y, epochs = 30)
+    fitted_model = train_ode(HNNODE(HNN(NNEnergy(dims, 2*dims))), X.detach(), y.detach(), t,  epochs = 30)
     
     for n in range(num_samples - burn):
         if verbose:
@@ -1422,14 +1427,13 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass)
             with torch.no_grad():
-                ham = fitted_model.odefunc.H(torch.cat([params, momentum], axis = 1))
+                ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
-            
-            params = leapfrog_params[-1].to(device).detach().requires_grad_()
-            momentum = leapfrog_momenta[-1].to(device)
+            params = leapfrog_params[-1,0,:].to(device).detach().requires_grad_()
+            momentum = leapfrog_momenta[-1,0,:].to(device)
             with torch.no_grad():
-                new_ham = fitted_model.odefunc.H(torch.cat([params, momentum], axis = 1))
+                new_ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
 
 
 
