@@ -279,7 +279,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             return p.grad
         ret_params = []
         ret_momenta = []
-        p_grad = params_grad(params) if pass_grad is None else pass_grad(params)
+        p_grad = params_grad(params) 
         momentum = 0.5 * step_size * p_grad
         for n in range(steps):
             if inv_mass is None:
@@ -296,7 +296,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                     params = params + step_size * torch.matmul(inv_mass,momentum.view(-1,1)).view(-1) #/normalizing_const
                 else:
                     params = params + step_size * inv_mass * momentum #/normalizing_const
-            p_grad = params_grad(params) if pass_grad is None else pass_grad(params)
+            p_grad = params_grad(params) 
             momentum += step_size * p_grad
             ret_params.append(params.clone())
             ret_momenta.append(momentum.clone())
@@ -1268,11 +1268,11 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
     X = torch.cat(param_trajectories)
     y = torch.cat(gradient_trajectories)
     dims = X.shape[1]
-    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim = 2 * dims), X.detach(), y.detach(), epochs = 30)
+    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim =  100 * dims), X.detach(), y.detach(), epochs = 100)
     
     return sample(log_prob_func, params_init=params, num_samples=num_samples - burn, num_steps_per_sample=num_steps_per_sample, step_size=step_size,
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
-                  pass_grad=fitted_model, verbose=verbose)
+                  pass_grad=fitted_model.forward, verbose=verbose), fitted_model
 
 def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, desired_accept_rate=0.8, debug = False, store_on_GPU = True, pass_grad = None, verbose = True):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
@@ -1419,25 +1419,26 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
-    fitted_model = train_ode(HNNODE(HNN(NNEnergy(dims, 2*dims))), X.detach(), y.detach(), t,  epochs = 30)
+    fitted_model = train_ode(HNNODE(HNN(NNEnergy(dims, dims*100))), X.detach(), y.detach(), t,  epochs = 100)
     
     for n in range(num_samples - burn):
         if verbose:
             util.progress_bar_update(n)
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass)
-            with torch.no_grad():
-                ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
+
+            # ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
-            params = leapfrog_params[-1,0,:].to(device).detach().requires_grad_()
+            # params = leapfrog_params[-1,0,:].to(device).detach().requires_grad_()
+            params = leapfrog_params[-1,0,:].to(device)
             momentum = leapfrog_momenta[-1,0,:].to(device)
-            with torch.no_grad():
-                new_ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
+         
+            # new_ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
 
+            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
-
-            # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
                 print('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
@@ -1447,10 +1448,10 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
                     print('Accept rho: {}'.format(rho))
 
                 if store_on_GPU:
-                    ret_params.append(leapfrog_params[-1])
+                    ret_params.append(leapfrog_params[-1, 0, :])
                 else:
                     # Store samples on CPU
-                    ret_params.append(leapfrog_params[-1].cpu())
+                    ret_params.append(leapfrog_params[-1, 0, :].cpu())
             else:
                 num_rejected += 1
 
@@ -1459,7 +1460,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
                 if store_on_GPU:
                     ret_params.append(ret_params[-1].to(device))
                 else:
-                    # Store samples on CPU
+                    # Store samples on CPUs
                     ret_params.append(ret_params[-1].cpu())
 
                 if debug == 1:
@@ -1508,9 +1509,9 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     if verbose:
         util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
     if debug == 2:
-        return list(map(lambda t: t.detach(), ret_params)), 1 - num_rejected/num_samples
+        return list(map(lambda t: t.detach(), ret_params)), 1 - num_rejected/num_samples, fitted_model
     else:
-        return list(map(lambda t: t.detach(), ret_params))
+        return list(map(lambda t: t.detach(), ret_params)), fitted_model
     
 
 def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, prior_scale = 1.0, device = 'cpu'):
