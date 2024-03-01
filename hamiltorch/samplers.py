@@ -4,7 +4,7 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy, NNEnergyExplicit
 
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -1274,7 +1274,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
                   pass_grad=fitted_model.forward, verbose=verbose), fitted_model
 
-def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, desired_accept_rate=0.8, debug = False, store_on_GPU = True, pass_grad = None, verbose = True):
+def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1341,7 +1341,6 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     num_rejected = 0
     sampler = Sampler.HMC
     integrator = Integrator.IMPLICIT
-    # if sampler == Sampler.HMC:
     if verbose:
         util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
 
@@ -1419,7 +1418,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
-    fitted_model = train_ode(HNNODE(HNN(NNEnergy(dims, dims*100))), X.detach(), y.detach(), t,  epochs = 100)
+    model = HNNODE(HNN(NNEnergy(dims, dims*100))) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)))
+    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
     
     for n in range(num_samples - burn):
         if verbose:
@@ -1513,6 +1513,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     else:
         return list(map(lambda t: t.detach(), ret_params)), fitted_model
     
+
+
 
 def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, prior_scale = 1.0, device = 'cpu'):
     """This function defines the `log_prob_func` for torch nn.Modules. This will then be passed into the hamiltorch sampler. This is an important
