@@ -641,7 +641,7 @@ def approximate_leapfrog_hmc(params, momentum, leapfrog_model: HNNODE, steps = 1
     t = torch.linspace(start = 0, end = steps*step_size, steps=steps)
     with torch.no_grad():
         _, leapfrog_values = leapfrog_model.forward(initial_values, t)
-    return leapfrog_values[:,:,:dims], leapfrog_values[:,:,dims:2*dims]
+    return leapfrog_values[...,:dims], leapfrog_values[...,dims:]
 
 def acceptance(h_old, h_new):
     """Returns the log acceptance ratio for the Metroplis-Hastings step.
@@ -1274,7 +1274,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
                   pass_grad=fitted_model.forward, verbose=verbose), fitted_model
 
-def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True):
+def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1418,7 +1418,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
-    model = HNNODE(HNN(NNEnergy(dims, dims*100))) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)))
+    model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
     
     for n in range(num_samples - burn):
@@ -1513,7 +1513,243 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     else:
         return list(map(lambda t: t.detach(), ret_params)), fitted_model
     
+def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
+    """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
+        which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
+        sampled.
 
+        Parameters
+        ----------
+        log_prob_func : function
+            A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being sampled.
+        params_init : torch.tensor
+            Initialisation of the parameters. This is a vector corresponding to the starting point of the sampler: shape: (D,), where D is the number of parameters of the model.
+        num_samples : int
+            Sets the number of samples corresponding to the number of momentum resampling steps/the number of trajectories to sample.
+        num_steps_per_sample : int
+            The number of steps to take per trajector (often referred to as L).
+        step_size : float
+            Size of each step to take when doing the numerical integration.
+        burn : int
+            Number of samples to burn before collecting samples. Set to -1 for no burning of samples. This must be less than `num_samples` as `num_samples` subsumes `burn`.
+        
+        debug : {0, 1, 2}
+            Debug mode can take 3 options. Setting debug = 0 (default) allows the sampler to run as normal. Setting debug = 1 prints both the old and new Hamiltonians per iteration,
+            and also prints the convergence values when using the generalised leapfrog (IMPLICIT RMHMC). Setting debug = 2, ensures an additional float is returned corresponding
+            to the acceptance rate or the adapted step size (depending if NUTS is used.)
+        desired_accept_rate : float
+            Only relevant for NUTS. Sets the ideal acceptance rate that the NUTS will converge to.
+        store_on_GPU : bool
+            Option that determines whether to keep samples in GPU memory. It runs fast when set to TRUE but may run out of memory unless set to FALSE.
+        verbose : bool
+            If set to true then do not display loading bar
+
+        Returns
+        -------
+        param_samples : list of torch.tensor(s)
+            A list of parameter samples. The full trajectory will be returned such that selecting the proposed params requires indexing [1::L] to remove params_innit and select
+            the end of the trajectories.
+        step_size : float, optional
+            Only returned when debug = 2 and using NUTS. This is the final adapted step size.
+        acc_rate : float, optional
+            Only returned when debug = 2 and not using NUTS. This is the acceptance rate.
+
+        """
+    
+    ##### during the burn-in step we want to collect samples to train the surrogate hmc
+    #### this model trains on the gradient of the potential function U(p) (which is the gradient of -log(p))
+
+   # Needed for memory moving i.e. move samples to CPU RAM so lookup GPU device
+    device = params_init.device
+
+    if params_init.dim() != 1:
+        raise RuntimeError('params_init must be a 1d tensor.')
+
+    if burn >= num_samples:
+        raise RuntimeError('burn must be less than num_samples.')
+
+    # Invert mass matrix once (As mass is used in Gibbs resampling step)
+    mass = None
+    inv_mass = None
+    params = params_init.clone().requires_grad_()
+    param_burn_prev = params_init.clone()
+    if not store_on_GPU:
+        ret_params = [params.clone().detach().cpu()]
+    else:
+        ret_params = [params.clone()]
+
+    num_rejected = 0
+    sampler = Sampler.RMHMC
+    integrator = Integrator.IMPLICIT
+    if verbose:
+        util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
+
+    param_trajectories = []
+    momentum_trajectories = []
+    param_traj_inits = []
+    momentum_traj_inits = []
+    for n in range(burn):
+        if verbose:
+            util.progress_bar_update(n)
+        try:
+            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=None, normalizing_const=1., softabs_const=None, mass=mass)
+
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+
+            leapfrog_params, leapfrog_momenta = leapfrog(params, momentum, log_prob_func, steps=num_steps_per_sample, 
+                                                         step_size=step_size, pass_grad = pass_grad, sampler = sampler, integrator = integrator)
+            param_trajectories.append(torch.stack(leapfrog_params,axis=0))
+            momentum_trajectories.append(torch.stack(leapfrog_momenta, axis = 0))
+            param_traj_inits.append(leapfrog_params[0])
+            momentum_traj_inits.append(leapfrog_momenta[0])
+            params = leapfrog_params[-1].to(device).detach().requires_grad_()
+            momentum = leapfrog_momenta[-1].to(device)
+            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+
+
+
+            # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
+            rho = min(0., acceptance(ham, new_ham))
+            if debug == 1:
+                print('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
+
+            if rho >= torch.log(torch.rand(1)):
+                if debug == 1:
+                    print('Accept rho: {}'.format(rho))
+
+                param_burn_prev = leapfrog_params[-1].to(device).clone()
+            else:
+                num_rejected += 1
+                params = param_burn_prev.clone()
+                if debug == 1:
+                    print('REJECT')
+
+
+            # if not store_on_GPU: # i.e. delete stuff left on GPU
+            #     # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
+            #     # but leaves no memory footprint on GPU after use.
+            #     # Might need to check if variables exist as a log prob error could occur before they are assigned!
+            #
+            #     del momentum, leapfrog_params, leapfrog_momenta, ham, new_ham
+            #     torch.cuda.empty_cache()
+
+        except util.LogProbError:
+            num_rejected += 1
+            params = ret_params[-1].to(device)
+            params = param_burn_prev.clone()
+            if debug == 1:
+                print('REJECT')
+        if not store_on_GPU: # i.e. delete stuff left on GPU
+            # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
+            # but leaves no memory footprint on GPU after use in normal HMC mode. (not split)
+            # Might need to check if variables exist as a log prob error could occur before they are assigned!
+            momentum = None; leapfrog_params = None; leapfrog_momenta = None; ham = None; new_ham = None
+
+            del momentum, leapfrog_params, leapfrog_momenta, ham, new_ham
+            torch.cuda.empty_cache()
+
+                # var_names = ['momentum', 'leapfrog_params', 'leapfrog_momenta', 'ham', 'new_ham']
+                # [util.gpu_check_delete(var, locals()) for var in var_names]
+            # import pdb; pdb.set_trace()
+
+    ###### this is where we train our surrogate model 
+    ### we can overfit 
+    y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = 2)
+    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
+    t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
+    dims = X.shape[1]
+    model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
+    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
+    
+    for n in range(num_samples - burn):
+        if verbose:
+            util.progress_bar_update(n)
+        try:
+            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass)
+
+            # ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+
+            leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
+            params = leapfrog_params[-1,0,:].to(device)
+            momentum = leapfrog_momenta[-1,0,:].to(device)
+         
+
+            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
+
+            rho = min(0., acceptance(ham, new_ham))
+            if debug == 1:
+                print('Step: {}, Current Hamiltoninian: {}, Proposed Hamiltoninian: {}'.format(n,ham,new_ham))
+
+            if rho >= torch.log(torch.rand(1)):
+                if debug == 1:
+                    print('Accept rho: {}'.format(rho))
+
+                if store_on_GPU:
+                    ret_params.append(leapfrog_params[-1, 0, :])
+                else:
+                    # Store samples on CPU
+                    ret_params.append(leapfrog_params[-1, 0, :].cpu())
+            else:
+                num_rejected += 1
+
+                params = ret_params[-1].to(device)
+                # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
+                if store_on_GPU:
+                    ret_params.append(ret_params[-1].to(device))
+                else:
+                    # Store samples on CPUs
+                    ret_params.append(ret_params[-1].cpu())
+
+                if debug == 1:
+                    print('REJECT')
+
+            
+
+            # if not store_on_GPU: # i.e. delete stuff left on GPU
+            #     # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
+            #     # but leaves no memory footprint on GPU after use.
+            #     # Might need to check if variables exist as a log prob error could occur before they are assigned!
+            #
+            #     del momentum, leapfrog_params, leapfrog_momenta, ham, new_ham
+            #     torch.cuda.empty_cache()
+
+        except util.LogProbError:
+            num_rejected += 1
+            params = ret_params[-1].to(device)
+
+            params = ret_params[-1].to(device)
+            # leapfrog_params = ret_params[-num_steps_per_sample:] ### Might want to remove grad as wastes memory
+            if store_on_GPU:
+                ret_params.append(ret_params[-1].to(device))
+            else:
+                # Store samples on CPU
+                ret_params.append(ret_params[-1].cpu())
+
+            if debug == 1:
+                print('REJECT')
+           
+        if not store_on_GPU: # i.e. delete stuff left on GPU
+            # This adds approximately 50% to runtime when using colab 'Tesla P100-PCIE-16GB'
+            # but leaves no memory footprint on GPU after use in normal HMC mode. (not split)
+            # Might need to check if variables exist as a log prob error could occur before they are assigned!
+            momentum = None; leapfrog_params = None; leapfrog_momenta = None; ham = None; new_ham = None
+
+            del momentum, leapfrog_params, leapfrog_momenta, ham, new_ham
+            torch.cuda.empty_cache()
+
+                # var_names = ['momentum', 'leapfrog_params', 'leapfrog_momenta', 'ham', 'new_ham']
+                # [util.gpu_check_delete(var, locals()) for var in var_names]
+            # import pdb; pdb.set_trace()
+
+
+    # import pdb; pdb.set_trace()
+    if verbose:
+        util.progress_bar_end('Acceptance Rate {:.2f}'.format(1 - num_rejected/num_samples)) #need to adapt for burn
+    if debug == 2:
+        return list(map(lambda t: t.detach(), ret_params)), 1 - num_rejected/num_samples, fitted_model
+    else:
+        return list(map(lambda t: t.detach(), ret_params)), fitted_model
 
 
 def define_model_log_prob(model, model_loss, x, y, params_flattened_list, params_shape_list, tau_list, tau_out, normalizing_const=1., predict=False, prior_scale = 1.0, device = 'cpu'):

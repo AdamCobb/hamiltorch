@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.autograd import grad
 from torchdyn.core import NeuralODE
 
+
 class NNgHMC(nn.Module):
     """
     simple model which aims to model the gradient of the log likelihood directly 
