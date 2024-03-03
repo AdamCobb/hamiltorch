@@ -279,8 +279,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
             return p.grad
         ret_params = []
         ret_momenta = []
-        p_grad = params_grad(params) 
-        momentum = 0.5 * step_size * p_grad
+        momentum += 0.5 * step_size * params_grad(params)
         for n in range(steps):
             if inv_mass is None:
                 params = params + step_size * momentum #/normalizing_const
@@ -296,7 +295,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
                     params = params + step_size * torch.matmul(inv_mass,momentum.view(-1,1)).view(-1) #/normalizing_const
                 else:
                     params = params + step_size * inv_mass * momentum #/normalizing_const
-            p_grad = params_grad(params) 
+            p_grad = params_grad(params)
             momentum += step_size * p_grad
             ret_params.append(params.clone())
             ret_momenta.append(momentum.clone())
@@ -608,6 +607,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         raise NotImplementedError()
 
 
+
 def leapfrog_hmc(params, momentum, log_prob_func, steps = 10, step_size = 0.1, pass_grad = None):
         def params_grad(p):
             p = p.detach().requires_grad_()
@@ -881,6 +881,7 @@ def hamiltonian(params, momentum, log_prob_func, jitter=0.01, normalizing_const=
         raise NotImplementedError()
     # if not tup:
     return hamiltonian
+
 
 
 

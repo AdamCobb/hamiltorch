@@ -152,8 +152,11 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
+
+
     if loss_type == "l2":
         loss_func = nn.MSELoss()
+        
     else:
         raise ValueError
     for i in range(epochs):
