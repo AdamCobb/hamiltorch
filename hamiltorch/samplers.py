@@ -4,7 +4,7 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy, NNEnergyExplicit
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy, NNEnergyExplicit, NNODEgHMC
 
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -1275,7 +1275,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
                   pass_grad=fitted_model.forward, verbose=verbose), fitted_model
 
-def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
+def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, model_type = "", debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1419,7 +1419,14 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
-    model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
+
+    model = NNODEgHMC(NNgHMC(input_dim = dims // 2, output_dim = dims // 2, hidden_dim =  100 * dims))
+    if model_type == "explicit_hamiltonian":
+        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
+    elif model_type == "implicit_hamiltonian":
+        model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver)
+    
+
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
     
     for n in range(num_samples - burn):

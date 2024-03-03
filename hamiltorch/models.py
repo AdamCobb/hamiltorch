@@ -18,8 +18,7 @@ class NNgHMC(nn.Module):
         self.layer_2 = nn.Linear(in_features=self.hidden_dim, out_features = self.output_dim)
 
     def forward(self, x):
-        return self.layer_2(nn.Tanh()(self.layer_1(x)))
-    
+        return self.layer_2(nn.Tanh()(self.layer_1(x)))    
 
 class NNmRHMC(nn.Module):
     """
@@ -117,6 +116,15 @@ class HNNODE(nn.Module):
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
     def forward(self, x, t, *args, **kwargs):
         return self.neural_ode_layer.forward(x, t)
+
+class NNODEgHMC(nn.Module):
+    def __init__(self, odefunc: NNgHMC, sensitivity="autograd", solver = "alf", atol=1e-3, rtol=1e-3) -> None:
+        super(NNODEgHMC, self).__init__()
+        self.odefunc = odefunc
+        self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
+    def forward(self, x, t, *args, **kwargs):
+        return self.neural_ode_layer.forward(x, t)
+
 
 
 
