@@ -85,12 +85,16 @@ class NNEnergyExplicit(nn.Module):
 
 
     def forward(self, x, *args, **kwargs):
+        potential, mass, p = self.compute_components(x)
+        return  potential + .5 * torch.sum(mass * torch.pow(p, 2), dim = 1)
+    
+    def compute_components(self, x, *args, **kwargs):
         n = self.input_dim // 2
         q, p = torch.split(x, n, 1)
         output = nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(q))))
         potential = output[:,0]
         mass = output[:, 1:]
-        return  potential + .5 * torch.sum(mass * torch.pow(p, 2), dim = 1)
+        return  potential, mass, p
 
 
 
