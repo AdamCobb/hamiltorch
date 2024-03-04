@@ -1420,11 +1420,11 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(NNgHMC(input_dim = dims // 2, output_dim = dims // 2, hidden_dim =  100 * dims))
+    model = NNODEgHMC(NNgHMC(input_dim = dims // 2, output_dim = dims // 2, hidden_dim =  10 * dims))
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
+        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 10)), solver = solver)
     elif model_type == "implicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver)
+        model = HNNODE(HNN(NNEnergy(dims, dims*10)), solver = solver)
     
 
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
@@ -1521,7 +1521,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     else:
         return list(map(lambda t: t.detach(), ret_params)), fitted_model
     
-def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
+def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5", metric = Metric.SOFTABS, softabs_const = .001):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1600,12 +1600,12 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
         if verbose:
             util.progress_bar_update(n)
         try:
-            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=None, normalizing_const=1., softabs_const=None, mass=mass)
+            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=None, normalizing_const=1., softabs_const=softabs_const, mass=mass, metric = metric)
 
-            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric=metric, softabs_const=softabs_const )
 
             leapfrog_params, leapfrog_momenta = leapfrog(params, momentum, log_prob_func, steps=num_steps_per_sample, 
-                                                         step_size=step_size, pass_grad = pass_grad, sampler = sampler, integrator = integrator)
+                                                         step_size=step_size, pass_grad = pass_grad, sampler = sampler, integrator = integrator, metric=metric, softabs_const=softabs_const)
             param_trajectories.append(torch.stack(leapfrog_params,axis=0))
             momentum_trajectories.append(torch.stack(leapfrog_momenta, axis = 0))
             param_traj_inits.append(leapfrog_params[0])
