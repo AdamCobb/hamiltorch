@@ -1591,7 +1591,6 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     integrator = Integrator.IMPLICIT
     if verbose:
         util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
-
     param_trajectories = []
     momentum_trajectories = []
     param_traj_inits = []
@@ -1612,7 +1611,7 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
             momentum_traj_inits.append(leapfrog_momenta[0])
             params = leapfrog_params[-1].to(device).detach().requires_grad_()
             momentum = leapfrog_momenta[-1].to(device)
-            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
 
 
 
@@ -1673,17 +1672,17 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
         if verbose:
             util.progress_bar_update(n)
         try:
-            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass)
+            momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass, metric = metric, softabs_const = softabs_const)
 
             # ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
-            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, )
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
             params = leapfrog_params[-1,0,:].to(device)
             momentum = leapfrog_momenta[-1,0,:].to(device)
          
 
-            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
+            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
 
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
