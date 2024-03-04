@@ -1422,9 +1422,9 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     model = NNODEgHMC(NNgHMC(input_dim = dims // 2, output_dim = dims // 2, hidden_dim =  10 * dims))
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 10)), solver = solver)
+        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
     elif model_type == "implicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergy(dims, dims*10)), solver = solver)
+        model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver)
     
 
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
