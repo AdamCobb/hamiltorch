@@ -1421,7 +1421,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(NNgHMC(input_dim = dims , output_dim = dims , hidden_dim =  100 * dims))
+    model = NNODEgHMC(NNgHMC(input_dim = dims , output_dim = dims , hidden_dim =  100 * dims), solver=SynchronousLeapfrog(),
+                      sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
         model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
     elif model_type == "implicit_hamiltonian":

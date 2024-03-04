@@ -1,5 +1,6 @@
 import torch
 from torchdyn.numerics.solvers.templates import DiffEqSolver
+from torchdyn.numerics.solvers.ode import SolverTemplate
 from torchdyn.numerics.solvers._constants import construct_rk4
 from .models import HNN
 
@@ -24,14 +25,15 @@ class SynchronousLeapfrog(DiffEqSolver):
         q, p = xv[..., :half_state_dim], xv[..., half_state_dim:]
         dH = f(t, xv)
         dq, dp = dH[..., :half_state_dim], dH[..., half_state_dim:]
-        _, inv_mass , _ = f.H.compute_components(xv)
-        q_new = q + dt * p * inv_mass  + .5 * torch.square(dt) * dp * inv_mass
+        q_new = q + dt * p  + .5 * torch.square(dt) * dp 
 
         dH_new = f(t, torch.cat([q_new, p], -1))
         dq_new, dp_new = dH_new[..., :half_state_dim], dH_new[..., half_state_dim:]
         p_new = p  + .5 * dt * (dp + dp_new)
 
         x_sol = torch.cat([q_new, p_new], -1)
+
+        print(x_sol.shape)
 
 
         if self.stepping_class == 'adaptive':
