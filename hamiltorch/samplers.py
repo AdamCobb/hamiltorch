@@ -5,6 +5,7 @@ from enum import Enum
 from numpy import pi
 from . import util
 from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy, NNEnergyExplicit, NNODEgHMC
+from .ode import SynchronousLeapfrog
 
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -1420,7 +1421,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(NNgHMC(input_dim = dims // 2, output_dim = dims // 2, hidden_dim =  10 * dims))
+    model = NNODEgHMC(NNgHMC(input_dim = dims , output_dim = dims , hidden_dim =  100 * dims))
     if model_type == "explicit_hamiltonian":
         model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
     elif model_type == "implicit_hamiltonian":

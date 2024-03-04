@@ -118,7 +118,7 @@ class HNNODE(nn.Module):
         return self.neural_ode_layer.forward(x, t)
 
 class NNODEgHMC(nn.Module):
-    def __init__(self, odefunc: NNgHMC, sensitivity="autograd", solver = "alf", atol=1e-3, rtol=1e-3) -> None:
+    def __init__(self, odefunc: NNgHMC, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
         super(NNODEgHMC, self).__init__()
         self.odefunc = odefunc
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
