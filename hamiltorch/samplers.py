@@ -4,8 +4,8 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergy, NNEnergyExplicit, NNODEgHMC
-from .ode import SynchronousLeapfrog
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergyExplicit, NNEnergyDeriv, NNODEgHMC, NNODEgRMHMC, RMHNN, RMHNNODE
+from .ode import SynchronousLeapfrog, NonSeparableSynchronousLeapfrog
 
 # Docstring:
 # https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
@@ -643,6 +643,14 @@ def approximate_leapfrog_hmc(params, momentum, leapfrog_model: HNNODE, steps = 1
     with torch.no_grad():
         _, leapfrog_values = leapfrog_model.forward(initial_values, t)
     return leapfrog_values[...,:dims], leapfrog_values[...,dims:]
+
+def approximate_leapfrog_rmhmc(params, momentum, leapfrog_model: RMHNNODE, steps = 10, step_size = 0.1):
+    dims = params.shape[0]
+    initial_values = torch.cat([params, momentum, params, momentum])[None,:]
+    t = torch.linspace(start = 0, end = steps*step_size, steps=steps)
+    with torch.no_grad():
+        _, leapfrog_values = leapfrog_model.forward(initial_values, t)
+    return [leapfrog_values[...,:dims], leapfrog_values[...,dims:2*dims]], [leapfrog_values[...,2*dims:3*dims], leapfrog_values[..., 3*dims: ]]
 
 def acceptance(h_old, h_new):
     """Returns the log acceptance ratio for the Metroplis-Hastings step.
@@ -1421,12 +1429,11 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(NNgHMC(input_dim = dims , output_dim = dims , hidden_dim =  100 * dims), solver=SynchronousLeapfrog(),
+    model = NNODEgHMC(NNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(),
                       sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
-    elif model_type == "implicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver)
+        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = solver)
+
     
 
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
@@ -1523,7 +1530,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     else:
         return list(map(lambda t: t.detach(), ret_params)), fitted_model
     
-def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, explicit = False, debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5", metric = Metric.SOFTABS, softabs_const = .001):
+def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, model_type = "", debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5", metric = Metric.SOFTABS, softabs_const = .001, binding_cost = 100.):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1590,7 +1597,7 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
 
     num_rejected = 0
     sampler = Sampler.RMHMC
-    integrator = Integrator.IMPLICIT
+    integrator = Integrator.EXPLICIT
     if verbose:
         util.progress_bar_init('Sampling ({}; {})'.format(sampler, integrator), num_samples, 'Samples')
     param_trajectories = []
@@ -1603,18 +1610,30 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, jitter=None, normalizing_const=1., softabs_const=softabs_const, mass=mass, metric = metric)
 
-            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric=metric, softabs_const=softabs_const )
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric=metric, softabs_const=softabs_const, explicit_binding_const=binding_cost )
 
             leapfrog_params, leapfrog_momenta = leapfrog(params, momentum, log_prob_func, steps=num_steps_per_sample, 
-                                                         step_size=step_size, pass_grad = pass_grad, sampler = sampler, integrator = integrator, metric=metric, softabs_const=softabs_const)
-            param_trajectories.append(torch.stack(leapfrog_params,axis=0))
-            momentum_trajectories.append(torch.stack(leapfrog_momenta, axis = 0))
+                                                         step_size=step_size, pass_grad = pass_grad, sampler = sampler, integrator = integrator, metric=metric, softabs_const=softabs_const, explicit_binding_const=binding_cost)
+
+
+            # Step required to remove bias by comparing to Hamiltonian that is not augmented:
+            ham = ham/2 # Original RMHMC
+
+            params = leapfrog_params[0][-1].detach().requires_grad_()
+            params_copy = leapfrog_params[-1].detach().requires_grad_()
+            params_copy = params_copy.detach().requires_grad_()
+            momentum = leapfrog_momenta[0][-1]
+            momentum_copy = leapfrog_momenta[-1]
+
+            leapfrog_params = leapfrog_params[0]
+            leapfrog_momenta = leapfrog_momenta[0]
+
+            param_trajectories.append(leapfrog_params)
+            momentum_trajectories.append(leapfrog_momenta)
             param_traj_inits.append(leapfrog_params[0])
             momentum_traj_inits.append(leapfrog_momenta[0])
-            params = leapfrog_params[-1].to(device).detach().requires_grad_()
-            momentum = leapfrog_momenta[-1].to(device)
-            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
-
+            # This is trying the new (unbiased) version:
+            new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric,) # In rm sampler so no need for inv_mass
 
 
             # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
@@ -1664,10 +1683,18 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     ###### this is where we train our surrogate model 
     ### we can overfit 
     y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = 2)
-    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
+    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0), torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0) ], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
-    dims = X.shape[1]
-    model = HNNODE(HNN(NNEnergy(dims, dims*100)), solver = solver) if not explicit else HNNODE(HNN(NNEnergyExplicit(dims, dims * 100)), solver = solver)
+    dims = X.shape[1] // 2
+
+
+    model = NNODEgRMHMC(NNgHMC(input_dim = dims , hidden_dim= 100 * dims, output_dim=dims), solver=NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
+                      sensitivity="adjoint")
+    if model_type == "explicit_hamiltonian":
+        model = RMHNNODE(RMHNN(NNEnergyExplicit(dims, dims * 100)), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
+                         sensitivity="adjoint")
+
+
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
     
     for n in range(num_samples - burn):
@@ -1676,15 +1703,16 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass, metric = metric, softabs_const = softabs_const)
 
-            # ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
-            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
+            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const, explicit_binding_const=binding_cost) /2
 
-            leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
-            params = leapfrog_params[-1,0,:].to(device)
-            momentum = leapfrog_momenta[-1,0,:].to(device)
+            leapfrog_params, leapfrog_momenta = approximate_leapfrog_rmhmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
+            params = leapfrog_params[0][-1,0,:].to(device)
+            params_copy = leapfrog_params[1][-1,0,:].to(device)
+            momentum = leapfrog_momenta[0][-1,0,:].to(device)
+            momentum_copy = leapfrog_momenta[1][-1,0,:].to(device)
          
 
-            new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
+            new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric) # In rm sampler so no need for inv_mass
 
             rho = min(0., acceptance(ham, new_ham))
             if debug == 1:
