@@ -4,7 +4,7 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergyExplicit, NNEnergyDeriv, NNODEgHMC, NNODEgRMHMC, RMHNN, RMHNNODE
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergyExplicit, HNNEnergyDeriv, NNODEgHMC, NNODEgRMHMC, RMHNN, RMHNNODE, RMHNNEnergyDeriv
 from .ode import SynchronousLeapfrog, NonSeparableSynchronousLeapfrog
 
 # Docstring:
@@ -1429,10 +1429,10 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(NNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(),
+    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(),
                       sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = SynchronousLeapfrog())
+        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = SynchronousLeapfrog(), sensitivity="autograd")
 
     
 
@@ -1689,11 +1689,11 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     dims = X.shape[1] // 2
 
 
-    model = NNODEgRMHMC(NNgHMC(input_dim = dims , hidden_dim= 100 * dims, output_dim=dims), solver=NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
-                      sensitivity="adjoint")
+    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims , hidden_dim= 100 * dims), solver=NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
+                      sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
         model = RMHNNODE(RMHNN(NNEnergyExplicit(dims, dims * 100)), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
-                         sensitivity="adjoint")
+                         sensitivity="autograd")
 
 
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)

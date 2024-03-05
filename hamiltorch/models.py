@@ -21,24 +21,41 @@ class NNgHMC(nn.Module):
         return self.layer_2(nn.Tanh()(self.layer_1(x)))    
 
 
-class NNEnergyDeriv(nn.Module):
+class HNNEnergyDeriv(nn.Module):
     """
     simple neural network that models the derivative of the hamiltonian energy. Explicitly,
     H(q,p) = U(q) + .5*p^Tp
     """
 
     def __init__(self, input_dim: int, hidden_dim: int) -> None:
-        super(NNEnergyDeriv, self).__init__()
+        super(HNNEnergyDeriv, self).__init__()
         self.input_dim = input_dim
         self.hidden_dim = hidden_dim
         self.potential_deriv = NNgHMC(input_dim = self.input_dim, output_dim=self.input_dim, hidden_dim=self.hidden_dim)
     def forward(self, x, *args, **kwargs):
         n = self.input_dim 
-        q, p = x[..., n:], x[..., :n]
+        q, p = x[..., :n], x[..., n:2*n]
         dHdq = self.potential_deriv(q)
         dHdp = p
         return  torch.cat([dHdp, -dHdq], - 1)
-    
+
+class RMHNNEnergyDeriv(nn.Module):
+    """
+    simple neural network that models the derivative of the hamiltonian energy. Explicitly,
+    H(q,p) = U(q) + .5*p^M(q)Tp
+    """
+
+    def __init__(self, input_dim: int, hidden_dim: int) -> None:
+        super(RMHNNEnergyDeriv, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.potential_deriv = NNgHMC(input_dim = self.input_dim, output_dim=self.input_dim, hidden_dim=self.hidden_dim)
+    def forward(self, x, *args, **kwargs):
+        n = self.input_dim  ### here it is both p, q concatenated
+        state_space = x[..., :n] 
+        dH = self.potential_deriv(state_space)
+        dHdq, dHdp = dH[..., : n // 2], dH[..., n // 2 : n]
+        return  torch.cat([dHdp, -dHdq], - 1)
 
 
 class NNEnergyExplicit(nn.Module):
@@ -73,8 +90,8 @@ class HNN(nn.Module):
         super(HNN, self).__init__()
         self.H = Hamiltonian
     def forward(self, t, x, *args, **kwargs):
-        n = x.shape[1] // 2
-        q, p = x[..., n:], x[..., :n]
+        n = self.H.input_dim 
+        q, p = x[..., :n], x[..., n:2*n]
         with torch.set_grad_enabled(True):
             
             q = q.requires_grad_(True)
@@ -90,11 +107,11 @@ class RMHNN(nn.Module):
         super(RMHNN, self).__init__()
         self.H = Hamiltonian
     def forward(self, t, x, *args, **kwargs):
-        n = x.shape[1] // 2
-        with torch.set_grad_enabled(True):
+        n = self.H.input_dim // 2 ### here the hamiltonian is expected to take in both q,p
+        with torch.set_grad_enabled(True): 
             x = x.requires_grad_(True)
             gradH = grad(self.H(x).sum(), x, create_graph=True)[0]
-        return torch.cat([gradH[..., :n], -gradH[..., n:]], -1).to(x)
+        return torch.cat([gradH[..., n:2*n], -gradH[..., :n]], -1).to(x)
 
 class HNNODE(nn.Module):
     def __init__(self, odefunc: HNN, sensitivity="adjoint", solver="dopri5", atol=1e-3, rtol=1e-3) -> None:
@@ -114,7 +131,7 @@ class RMHNNODE(nn.Module):
         return self.neural_ode_layer.forward(x, t)
 
 class NNODEgHMC(nn.Module):
-    def __init__(self, odefunc: NNEnergyDeriv, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
+    def __init__(self, odefunc: HNNEnergyDeriv, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
         super(NNODEgHMC, self).__init__()
         self.odefunc = odefunc
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
@@ -123,16 +140,12 @@ class NNODEgHMC(nn.Module):
 
 
 class NNODEgRMHMC(nn.Module):
-    def __init__(self, odefunc: NNgHMC, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
+    def __init__(self, odefunc: RMHNNEnergyDeriv, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
         super(NNODEgRMHMC, self).__init__()
         self.odefunc = odefunc
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
     def forward(self, x, t, *args, **kwargs):
         return self.neural_ode_layer.forward(x, t)
-
-
-
-
 
 
 
