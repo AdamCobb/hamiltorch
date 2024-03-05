@@ -1432,7 +1432,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     model = NNODEgHMC(NNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(),
                       sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = solver)
+        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = SynchronousLeapfrog())
 
     
 
@@ -1628,8 +1628,9 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
             leapfrog_params = leapfrog_params[0]
             leapfrog_momenta = leapfrog_momenta[0]
 
-            param_trajectories.append(leapfrog_params)
-            momentum_trajectories.append(leapfrog_momenta)
+
+            param_trajectories.append(torch.stack(leapfrog_params,0))
+            momentum_trajectories.append(torch.stack(leapfrog_momenta,0))
             param_traj_inits.append(leapfrog_params[0])
             momentum_traj_inits.append(leapfrog_momenta[0])
             # This is trying the new (unbiased) version:
@@ -1682,7 +1683,7 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
 
     ###### this is where we train our surrogate model 
     ### we can overfit 
-    y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = 2)
+    y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = -1)
     X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0), torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0) ], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1] // 2
@@ -1707,9 +1708,9 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_rmhmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
             params = leapfrog_params[0][-1,0,:].to(device)
-            params_copy = leapfrog_params[1][-1,0,:].to(device)
+            # params_copy = leapfrog_params[1][-1,0,:].to(device)
             momentum = leapfrog_momenta[0][-1,0,:].to(device)
-            momentum_copy = leapfrog_momenta[1][-1,0,:].to(device)
+            # momentum_copy = leapfrog_momenta[1][-1,0,:].to(device)
          
 
             new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric) # In rm sampler so no need for inv_mass
@@ -1723,10 +1724,10 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
                     print('Accept rho: {}'.format(rho))
 
                 if store_on_GPU:
-                    ret_params.append(leapfrog_params[-1, 0, :])
+                    ret_params.append(leapfrog_params[0][-1,0,:])
                 else:
                     # Store samples on CPU
-                    ret_params.append(leapfrog_params[-1, 0, :].cpu())
+                    ret_params.append(leapfrog_params[0][-1,0,:].cpu())
             else:
                 num_rejected += 1
 

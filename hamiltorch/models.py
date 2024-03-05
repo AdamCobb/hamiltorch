@@ -79,7 +79,7 @@ class HNN(nn.Module):
             
             q = q.requires_grad_(True)
             gradH = grad(self.H(q).sum(), q, create_graph=True)[0]
-        return torch.cat([p, -gradH], 1).to(x)
+        return torch.cat([p, -gradH], -1).to(x)
     
 
 class RMHNN(nn.Module):
@@ -94,7 +94,7 @@ class RMHNN(nn.Module):
         with torch.set_grad_enabled(True):
             x = x.requires_grad_(True)
             gradH = grad(self.H(x).sum(), x, create_graph=True)[0]
-        return torch.cat([gradH[..., :n], -gradH[..., n:]], 1).to(x)
+        return torch.cat([gradH[..., :n], -gradH[..., n:]], -1).to(x)
 
 class HNNODE(nn.Module):
     def __init__(self, odefunc: HNN, sensitivity="adjoint", solver="dopri5", atol=1e-3, rtol=1e-3) -> None:
@@ -124,7 +124,7 @@ class NNODEgHMC(nn.Module):
 
 class NNODEgRMHMC(nn.Module):
     def __init__(self, odefunc: NNgHMC, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
-        super(NNODEgHMC, self).__init__()
+        super(NNODEgRMHMC, self).__init__()
         self.odefunc = odefunc
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
     def forward(self, x, t, *args, **kwargs):
@@ -170,7 +170,6 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
-
     dims = y.shape[-1]
     if loss_type == "l2":
         loss_func = nn.MSELoss()
@@ -179,7 +178,7 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
         raise ValueError
     for i in range(epochs):
         _, y_pred = model(X, t)
-        loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., : 2 * dims], y)
+        loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., : dims], y)
        
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable

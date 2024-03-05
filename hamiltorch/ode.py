@@ -65,7 +65,8 @@ class NonSeparableSynchronousLeapfrog(DiffEqSolver):
         s = torch.sin(torch.FloatTensor([2* self.binding_const * dt]))
 
         half_state_dim = xv.shape[-1] // 4
-        q,p,q_cop,p_cop = torch.split(xv, 1, half_state_dim)
+
+        q,p,q_cop,p_cop = torch.split(xv, half_state_dim, dim = -1)
 
         gradH = f(t, torch.cat([q,p_cop], -1))
         dq, dp = gradH[..., : half_state_dim], gradH[..., half_state_dim:]
@@ -73,7 +74,7 @@ class NonSeparableSynchronousLeapfrog(DiffEqSolver):
         p_new = p + .5 * dt * dp
         q_cop_new = q_cop + .5 * dt * dq
 
-        gradH_new = f(t, torch.cat([q_cop_new, p_new]))
+        gradH_new = f(t, torch.cat([q_cop_new, p_new], -1))
         dq_new, dp_new = gradH_new[..., : half_state_dim], gradH_new[..., half_state_dim:]
 
         q_new = q + .5 * dt * dq_new
