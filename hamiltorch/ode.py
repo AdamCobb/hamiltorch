@@ -32,10 +32,6 @@ class SynchronousLeapfrog(DiffEqSolver):
         p_new = p  + .5 * dt * (dp + dp_new)
 
         x_sol = torch.cat([q_new, p_new], -1)
-
-        print(x_sol.shape)
-
-
         if self.stepping_class == 'adaptive':
             xv_err = torch.cat([torch.zeros_like(q), p], -1)
         else:
