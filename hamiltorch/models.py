@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.autograd import grad
 from torchdyn.core import NeuralODE
 
+
 class NNgHMC(nn.Module):
     """
     simple model which aims to model the gradient of the log likelihood directly 
@@ -17,8 +18,7 @@ class NNgHMC(nn.Module):
         self.layer_2 = nn.Linear(in_features=self.hidden_dim, out_features = self.output_dim)
 
     def forward(self, x):
-        return self.layer_2(nn.Tanh()(self.layer_1(x)))
-    
+        return self.layer_2(nn.Tanh()(self.layer_1(x)))    
 
 class NNmRHMC(nn.Module):
     """
@@ -64,7 +64,39 @@ class NNEnergy(nn.Module):
 
     def forward(self, x, *args, **kwargs):
         return nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(x))))
+
+
+class NNEnergyExplicit(nn.Module):
+    """
+    simple neural network that models the hamiltonian energy Explicitly,
+    H(q,p) = U(q) + .5*p^TM(q)p
+    here we are enforcing that the mass matrix is diagonal 
+    """
+
+    def __init__(self, input_dim: int, hidden_dim: int) -> None:
+        super(NNEnergyExplicit, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = 1 + input_dim // 2
+        self.hidden_dim = hidden_dim
+        self.layer_1 = nn.Linear(in_features=self.input_dim // 2, out_features = self.hidden_dim)
+        self.layer_2 = nn.Linear(in_features=hidden_dim, out_features = self.output_dim)
+
+
+
+    def forward(self, x, *args, **kwargs):
+        potential, mass, p = self.compute_components(x)
+        return  potential + .5 * torch.sum(mass * torch.pow(p, 2), dim = 1)
     
+    def compute_components(self, x, *args, **kwargs):
+        n = self.input_dim // 2
+        q, p = torch.split(x, n, 1)
+        output = nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(q))))
+        potential = output[:,0]
+        mass = output[:, 1:]
+        return  potential, mass, p
+
+
+
     
 class HNN(nn.Module):
     def __init__(self, Hamiltonian: nn.Module) -> None:
@@ -84,6 +116,15 @@ class HNNODE(nn.Module):
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
     def forward(self, x, t, *args, **kwargs):
         return self.neural_ode_layer.forward(x, t)
+
+class NNODEgHMC(nn.Module):
+    def __init__(self, odefunc: NNgHMC, sensitivity="adjoint", solver = "dopri5", atol=1e-3, rtol=1e-3) -> None:
+        super(NNODEgHMC, self).__init__()
+        self.odefunc = odefunc
+        self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
+    def forward(self, x, t, *args, **kwargs):
+        return self.neural_ode_layer.forward(x, t)
+
 
 
 
@@ -123,12 +164,14 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
+
+
     if loss_type == "l2":
         loss_func = nn.MSELoss()
+        
     else:
         raise ValueError
     for i in range(epochs):
-
         _, y_pred = model(X, t)
         loss = loss_func(torch.swapaxes(y_pred, 0, 1), y)
        
