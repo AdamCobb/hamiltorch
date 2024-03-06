@@ -650,7 +650,7 @@ def approximate_leapfrog_rmhmc(params, momentum, leapfrog_model: RMHNNODE, steps
     t = torch.linspace(start = 0, end = steps*step_size, steps=steps)
     with torch.no_grad():
         _, leapfrog_values = leapfrog_model.forward(initial_values, t)
-    return [leapfrog_values[...,:dims], leapfrog_values[...,dims:2*dims]], [leapfrog_values[...,2*dims:3*dims], leapfrog_values[..., 3*dims: ]]
+    return [leapfrog_values[...,:dims], leapfrog_values[...,2*dims:3*dims]], [leapfrog_values[...,dims:2*dims], leapfrog_values[..., 3*dims: ]]
 
 def acceptance(h_old, h_new):
     """Returns the log acceptance ratio for the Metroplis-Hastings step.
@@ -1429,8 +1429,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(),
-                      sensitivity="autograd")
+    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(), sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
         model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = SynchronousLeapfrog(), sensitivity="autograd")
 
@@ -1444,7 +1443,6 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass)
 
-            # ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
             ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_hmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
@@ -1452,7 +1450,6 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
             params = leapfrog_params[-1,0,:].to(device)
             momentum = leapfrog_momenta[-1,0,:].to(device)
          
-            # new_ham = fitted_model.odefunc.H(torch.cat([params, momentum]))
 
             new_ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
@@ -1689,14 +1686,14 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     dims = X.shape[1] // 2
 
 
-    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims , hidden_dim= 100 * dims), solver=NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
-                      sensitivity="autograd")
+    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims , hidden_dim= 500 * dims), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
+                        sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
-        model = RMHNNODE(RMHNN(NNEnergyExplicit(dims, dims * 100)), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
+        model = RMHNNODE(RMHNN(NNEnergyExplicit(dims, dims * 500)), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
                          sensitivity="autograd")
 
 
-    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
+    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 500)
     
     for n in range(num_samples - burn):
         if verbose:
