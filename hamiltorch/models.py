@@ -1,4 +1,5 @@
 import torch 
+import numpy as np
 import torch.nn as nn
 from torch.autograd import grad
 from torchdyn.core import NeuralODE
@@ -58,7 +59,111 @@ class RMHNNEnergyDeriv(nn.Module):
         return  torch.cat([dHdp, -dHdq], - 1)
 
 
-class NNEnergyExplicit(nn.Module):
+class PotentialFunction(nn.Module):
+    """
+    simple neural network that models the potential function U(q)
+    since this is -log(p(q)) >= 0 we us the softplus
+
+    """
+    def __init__(self, input_dim: int, hidden_dim: int) -> None:
+        super(PotentialFunction, self).__init__()
+        self.input_dim = input_dim
+        self.output_dim = 1 
+        self.hidden_dim = hidden_dim
+        self.layer_1 = nn.Linear(in_features=self.input_dim, out_features = self.hidden_dim)
+        self.layer_2 = nn.Linear(in_features=hidden_dim, out_features = self.output_dim)
+
+
+
+    def forward(self, x, *args, **kwargs):
+        return nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(x))))
+
+
+
+
+
+class PSD(nn.Module):
+    '''A Neural Net which outputs a positive semi-definite matrix'''
+    def __init__(self, input_dim, hidden_dim, diag_dim):
+        super(PSD, self).__init__()
+        self.diag_dim = diag_dim
+        if diag_dim == 1:
+            self.linear1 = nn.Linear(input_dim, hidden_dim)
+            self.linear2 = nn.Linear(hidden_dim, diag_dim)
+
+            for l in [self.linear1, self.linear2]:
+                nn.init.orthogonal_(l.weight) # use a principled initialization
+            
+            self.nonlinearity = nn.Tanh()
+        else:
+            assert diag_dim > 1
+            self.diag_dim = diag_dim
+            self.off_diag_dim = int(diag_dim * (diag_dim - 1) / 2)
+            self.linear1 = nn.Linear(input_dim, hidden_dim)
+            self.linear2 = nn.Linear(hidden_dim, self.diag_dim + self.off_diag_dim)
+
+            for l in [self.linear1, self.linear2]:
+                nn.init.orthogonal_(l.weight) # use a principled initialization
+            
+            self.nonlinearity = nn.Tanh()
+
+    def forward(self, q):
+        if self.diag_dim == 1:
+            h = self.nonlinearity( self.linear1(q) )
+            h = self.nonlinearity( self.linear2(h) )
+            return h*h + 0.1
+        else:
+            bs = q.shape[0]
+            h = self.nonlinearity( self.linear1(q) )
+            diag, off_diag = torch.split(self.linear2(h), [self.diag_dim, self.off_diag_dim], dim=1)
+            # diag = nn.functional.relu( self.linear4(h) )
+
+            L = torch.diag_embed(nn.Softplus()(diag))
+
+            ind = np.tril_indices(self.diag_dim, k=-1)
+            flat_ind = np.ravel_multi_index(ind, (self.diag_dim, self.diag_dim))
+            L = torch.flatten(L, start_dim=1)
+            L[:, flat_ind] = off_diag
+            L = torch.reshape(L, (bs, self.diag_dim, self.diag_dim))
+
+            D = torch.bmm(L, L.permute(0, 2, 1))
+            return D
+
+
+class PSDPotential(nn.Module):
+    '''A Neural Net which outputs a positive semi-definite matrix and potential'''
+    def __init__(self, input_dim, hidden_dim, diag_dim):
+        super(PSDPotential, self).__init__()
+        self.diag_dim = diag_dim
+ 
+
+        self.diag_dim = diag_dim
+        self.off_diag_dim = int(diag_dim * (diag_dim - 1) / 2)
+        self.linear1 = nn.Linear(input_dim, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, self.diag_dim + self.off_diag_dim)
+        self.linear3 = nn.Linear(hidden_dim, 1)   
+        self.nonlinearity = nn.Tanh()
+
+    def forward(self, q):
+        bs = q.shape[0]
+        h = self.nonlinearity( self.linear1(q) )
+        diag, off_diag = torch.split(self.linear2(h), [self.diag_dim, self.off_diag_dim], dim=-1)
+        # diag = nn.functional.relu( self.linear4(h) )
+
+        L = torch.diag_embed(nn.Softplus()(diag))
+
+        ind = np.tril_indices(self.diag_dim, k=-1)
+        flat_ind = np.ravel_multi_index(ind, (self.diag_dim, self.diag_dim))
+        L = torch.flatten(L, start_dim=1)
+        L[:, flat_ind] = off_diag
+        L = torch.reshape(L, (bs, self.diag_dim, self.diag_dim))
+
+        D = torch.bmm(L, L.permute(0, 2, 1))
+        return D, nn.Softplus()(self.nonlinearity(self.linear3(h)))
+
+
+
+class HNNEnergyExplicit(nn.Module):
     """
     simple neural network that models the hamiltonian energy Explicitly,
     H(q,p) 
@@ -66,7 +171,7 @@ class NNEnergyExplicit(nn.Module):
     """
 
     def __init__(self, input_dim: int, hidden_dim: int) -> None:
-        super(NNEnergyExplicit, self).__init__()
+        super(HNNEnergyExplicit, self).__init__()
         self.input_dim = input_dim
         self.output_dim = 1 
         self.hidden_dim = hidden_dim
@@ -78,7 +183,27 @@ class NNEnergyExplicit(nn.Module):
     def forward(self, x, *args, **kwargs):
         return nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(x))))
     
+class RMHNNEnergyExplicit(nn.Module):
+    """
+    simple neural network that models the hamiltonian energy Explicitly,
+    H(q,p)  = U(q) + .5 * p^TM(q)p
 
+
+    """
+
+    def __init__(self, input_dim: int, hidden_dim: int) -> None:
+        super(RMHNNEnergyExplicit, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.hamiltonian_components = PSDPotential(input_dim = input_dim, hidden_dim=hidden_dim, diag_dim=input_dim)
+
+
+    def forward(self, x, *args, **kwargs):
+        q, p = x[..., :self.input_dim], x[..., self.input_dim:  2*self.input_dim]
+
+        mass_matrix, potential = self.hamiltonian_components(q)
+        kinetic = .5 * torch.bmm(p[:, None, :], torch.bmm(mass_matrix, p[:, :, None]))
+        return potential + kinetic
 
 
     
@@ -86,7 +211,7 @@ class HNN(nn.Module):
     """
     for the very simple case of HMC
     """
-    def __init__(self, Hamiltonian: NNEnergyExplicit) -> None:
+    def __init__(self, Hamiltonian: HNNEnergyExplicit) -> None:
         super(HNN, self).__init__()
         self.H = Hamiltonian
     def forward(self, t, x, *args, **kwargs):
@@ -103,7 +228,7 @@ class RMHNN(nn.Module):
     """
     for the very general case of riemannian manifold
     """
-    def __init__(self, Hamiltonian: NNEnergyExplicit) -> None:
+    def __init__(self, Hamiltonian: RMHNNEnergyExplicit) -> None:
         super(RMHNN, self).__init__()
         self.H = Hamiltonian
     def forward(self, t, x, *args, **kwargs):

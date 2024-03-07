@@ -4,7 +4,7 @@ from enum import Enum
 
 from numpy import pi
 from . import util
-from .models import NNgHMC, HNNODE, HNN, train, train_ode, NNEnergyExplicit, HNNEnergyDeriv, NNODEgHMC, NNODEgRMHMC, RMHNN, RMHNNODE, RMHNNEnergyDeriv
+from .models import NNgHMC, HNNODE, HNN, train, train_ode, RMHNNEnergyExplicit,HNNEnergyExplicit, HNNEnergyDeriv, NNODEgHMC, NNODEgRMHMC, RMHNN, RMHNNODE, RMHNNEnergyDeriv
 from .ode import SynchronousLeapfrog, NonSeparableSynchronousLeapfrog
 
 # Docstring:
@@ -646,11 +646,11 @@ def approximate_leapfrog_hmc(params, momentum, leapfrog_model: HNNODE, steps = 1
 
 def approximate_leapfrog_rmhmc(params, momentum, leapfrog_model: RMHNNODE, steps = 10, step_size = 0.1):
     dims = params.shape[0]
-    initial_values = torch.cat([params, momentum, params, momentum])[None,:]
+    initial_values = torch.cat([params, momentum])[None,:]
     t = torch.linspace(start = 0, end = steps*step_size, steps=steps)
     with torch.no_grad():
         _, leapfrog_values = leapfrog_model.forward(initial_values, t)
-    return [leapfrog_values[...,:dims], leapfrog_values[...,2*dims:3*dims]], [leapfrog_values[...,dims:2*dims], leapfrog_values[..., 3*dims: ]]
+    return leapfrog_values[...,:dims], leapfrog_values[...,dims:2*dims]
 
 def acceptance(h_old, h_new):
     """Returns the log acceptance ratio for the Metroplis-Hastings step.
@@ -1429,9 +1429,9 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims), solver=SynchronousLeapfrog(), sensitivity="autograd")
+    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims) , sensitivity="autograd")
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(NNEnergyExplicit(dims // 2, dims * 50)), solver = SynchronousLeapfrog(), sensitivity="autograd")
+        model = HNNODE(HNN(HNNEnergyExplicit(dims // 2, dims * 50)), sensitivity="autograd")
 
     
 
@@ -1631,7 +1631,7 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
             param_traj_inits.append(leapfrog_params[0])
             momentum_traj_inits.append(leapfrog_momenta[0])
             # This is trying the new (unbiased) version:
-            new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric,) # In rm sampler so no need for inv_mass
+            new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric) # In rm sampler so no need for inv_mass
 
 
             # new_ham = hamiltonian(params, momentum, log_prob_func, jitter=jitter, softabs_const=softabs_const, explicit_binding_const=explicit_binding_const, normalizing_const=normalizing_const, sampler=sampler, integrator=integrator, metric=metric)
@@ -1681,16 +1681,14 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     ###### this is where we train our surrogate model 
     ### we can overfit 
     y = torch.cat([torch.stack(param_trajectories, axis = 0), torch.stack(momentum_trajectories, axis = 0)], dim = -1)
-    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0), torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0) ], dim = 1)
+    X = torch.cat([torch.stack(param_traj_inits, axis = 0), torch.stack(momentum_traj_inits, axis = 0)], dim = 1)
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
-    dims = X.shape[1] // 2
+    dims = X.shape[1] 
 
 
-    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims , hidden_dim= 500 * dims), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
-                        sensitivity="autograd")
+    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims  , hidden_dim= 100 * dims))
     if model_type == "explicit_hamiltonian":
-        model = RMHNNODE(RMHNN(NNEnergyExplicit(dims, dims * 500)), solver = NonSeparableSynchronousLeapfrog(binding_const=binding_cost),
-                         sensitivity="autograd")
+        model = RMHNNODE(RMHNN(RMHNNEnergyExplicit(dims // 2, dims * 50)), sensitivity="adjoint")
 
 
     fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 500)
@@ -1701,13 +1699,11 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
         try:
             momentum = gibbs(params, sampler=sampler, log_prob_func=log_prob_func, mass=mass, metric = metric, softabs_const = softabs_const)
 
-            ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const, explicit_binding_const=binding_cost) /2
+            ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const = 1., sampler=sampler, integrator=integrator, metric = metric, softabs_const = softabs_const)
 
             leapfrog_params, leapfrog_momenta = approximate_leapfrog_rmhmc(params, momentum, fitted_model, steps=num_steps_per_sample, step_size=step_size)
-            params = leapfrog_params[0][-1,0,:].to(device)
-            # params_copy = leapfrog_params[1][-1,0,:].to(device)
-            momentum = leapfrog_momenta[0][-1,0,:].to(device)
-            # momentum_copy = leapfrog_momenta[1][-1,0,:].to(device)
+            params = leapfrog_params[-1,0,:].to(device)
+            momentum = leapfrog_momenta[-1,0,:].to(device)
          
 
             new_ham = rm_hamiltonian(params, momentum, log_prob_func, jitter = None, normalizing_const=1,  softabs_const=softabs_const, sampler=sampler, integrator=integrator, metric=metric) # In rm sampler so no need for inv_mass
@@ -1721,10 +1717,10 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
                     print('Accept rho: {}'.format(rho))
 
                 if store_on_GPU:
-                    ret_params.append(leapfrog_params[0][-1,0,:])
+                    ret_params.append(leapfrog_params[-1,0,:])
                 else:
                     # Store samples on CPU
-                    ret_params.append(leapfrog_params[0][-1,0,:].cpu())
+                    ret_params.append(leapfrog_params[-1,0,:].cpu())
             else:
                 num_rejected += 1
 
