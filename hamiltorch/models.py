@@ -35,10 +35,9 @@ class HNNEnergyDeriv(nn.Module):
         self.potential_deriv = NNgHMC(input_dim = self.input_dim, output_dim=self.input_dim, hidden_dim=self.hidden_dim)
     def forward(self, x, *args, **kwargs):
         n = self.input_dim 
-        q, p = x[..., :n], x[..., n:2*n]
+        q, p = x[..., :n], x[..., n:]
         dHdq = self.potential_deriv(q)
-        dHdp = p
-        return  torch.cat([dHdp, -dHdq], - 1)
+        return  torch.cat([p, -dHdq], - 1)
 
 class RMHNNEnergyDeriv(nn.Module):
     """
@@ -55,7 +54,7 @@ class RMHNNEnergyDeriv(nn.Module):
         n = self.input_dim  ### here it is both p, q concatenated
         state_space = x[..., :n] 
         dH = self.potential_deriv(state_space)
-        dHdq, dHdp = dH[..., : n // 2], dH[..., n // 2 : n]
+        dHdq, dHdp = dH[..., : n // 2], dH[..., n // 2 ]
         return  torch.cat([dHdp, -dHdq], - 1)
 
 
@@ -216,7 +215,7 @@ class HNN(nn.Module):
         self.H = Hamiltonian
     def forward(self, t, x, *args, **kwargs):
         n = self.H.input_dim 
-        q, p = x[..., :n], x[..., n:2*n]
+        q, p = x[..., :n], x[..., n:]
         with torch.set_grad_enabled(True):
             
             q = q.requires_grad_(True)
