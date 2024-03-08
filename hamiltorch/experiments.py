@@ -71,8 +71,7 @@ def run_experiment(model_type, sensitivity, distribution, solver):
 
 
 def surrogate_neural_ode_hmc_experiment():
-    # distributions = ["banana", "gaussian", "ill_conditioned_gaussian"]
-    distributions = ["gaussian", "ill_conditioned_gaussian"]
+    distributions = ["banana", "gaussian", "ill_conditioned_gaussian"]
     sensitivities = ["adjoint", "autograd"]
     solvers = ["SynchronousLeapfrog", "dopri5"]
     models = ["HMC", "NNgHMC", "Explicit NNODEgHMC", "NNODEgHMC"]

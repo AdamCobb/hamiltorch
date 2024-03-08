@@ -19,7 +19,7 @@ def plot_results(anchor_points, gradient_field_func, samples, trajectory, t, mod
     plt.grid()
     plt.title(f"Model: {model_name}, Solver: {solver}, Sensitivity: {sensitivity}")
     plt.savefig(f"../experiments/{model_name}_{solver}_{sensitivity}_{distribution}_full.png")
-    plt.show()
+    # plt.show()
 
 
 def plot_samples(sample_dict: Dict, mean, distribution_name=""):
@@ -37,7 +37,7 @@ def plot_samples(sample_dict: Dict, mean, distribution_name=""):
     axs.grid()
     plt.tight_layout()
     plt.savefig(f'../experiments/{distribution_name}_samples.png',bbox_inches='tight')
-    plt.show()
+    # plt.show()
 
 
 
@@ -61,7 +61,7 @@ def plot_reversibility(forward_trajectories, backward_trajectories, samples, mod
     plt.grid()
     plt.title(f"Model: {model_name}, Solver: {solver}, Sensitivity: {sensitivity}")
     plt.savefig(f"../experiments/{model_name}_{solver}_{sensitivity}_{distribution}_reversibility.png")
-    plt.show()
+    # plt.show()
     plt.clf()
 
 
