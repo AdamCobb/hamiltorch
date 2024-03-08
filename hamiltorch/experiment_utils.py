@@ -12,7 +12,7 @@ def banana_log_prob(w, a = 1, b = 1, c = 1):
     return ll
 
 
-def ill_conidtioned_gaussian_log_prob(w, D):
+def ill_conditioned_gaussian_log_prob(w, D):
     hamiltorch.set_random_seed(123)
     diagonal = torch.distributions.Uniform(0, 100).sample(sample_shape=(D,))
     diagonal[0] = .1
@@ -21,21 +21,16 @@ def ill_conidtioned_gaussian_log_prob(w, D):
     return ll
 
 
-def compute_reversibility_error(model, test_initial_conditions, t, L, step_size):
+def compute_reversibility_error(model, test_initial_conditions, t):
     D = test_initial_conditions.shape[-1] // 2
-    with torch.no_grad():
-        _, forward_trajectories = model(test_initial_conditions, t)
-
+    _, forward_trajectories = model(test_initial_conditions, t)
     forward_trajectories = torch.swapaxes(forward_trajectories, 0, 1)
     end_positions = forward_trajectories[:,-1,:]
-    backward_conditions = torch.matmul(end_positions, torch.block_diag(torch.eye(3), -1*torch.eye(3)))
-    backward_t = torch.linspace(end = 0, start = L*step_size, steps=L)
-    with torch.no_grad():
-        _, backward_trajectories = model(backward_conditions ,  backward_t)
+    backward_conditions = torch.matmul(end_positions, torch.block_diag(torch.eye(D), -1*torch.eye(D)))
+    _, backward_trajectories = model(backward_conditions , t)
     backward_trajectories = torch.swapaxes(backward_trajectories, 0, 1)
-
-    loss = nn.MSELoss()(backward_trajectories[:, -1, :D], test_initial_conditions[..., :D])
-    return loss, forward_trajectories, backward_trajectories
+    loss = nn.MSELoss()(backward_trajectories[:, -1, :D].detach(), test_initial_conditions[..., :D].detach())
+    return loss, forward_trajectories[..., :D].detach(), backward_trajectories[..., :D].detach()
 
 
 

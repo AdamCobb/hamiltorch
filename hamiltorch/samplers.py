@@ -1284,7 +1284,7 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
                   pass_grad=fitted_model.forward, verbose=verbose), fitted_model
 
-def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, model_type = "", debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5"):
+def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps_per_sample = 10, step_size = 0.1, burn = 0, model_type = "", debug = False, store_on_GPU = True, pass_grad = None, verbose = True, solver = "dopri5", sensitivity="adjoint"):
     """ This is the main sampling function of hamiltorch. Most samplers are built on top of this class. This function receives a function handle log_prob_func,
         which the sampler will use to evaluate the log probability of each sample. A log_prob_func must take a 1-d vector of length equal to the number of parameters that are being
         sampled.
@@ -1429,9 +1429,9 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     t = torch.linspace(start = 0, end = num_steps_per_sample*step_size, steps=num_steps_per_sample)
     dims = X.shape[1]
 
-    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims) , solver = SynchronousLeapfrog(), sensitivity="autograd")
+    model = NNODEgHMC(HNNEnergyDeriv(input_dim = dims //2, hidden_dim= 50 * dims) , solver = solver, sensitivity=sensitivity)
     if model_type == "explicit_hamiltonian":
-        model = HNNODE(HNN(HNNEnergyExplicit(dims // 2, dims * 50)), sensitivity="autograd", solver = SynchronousLeapfrog())
+        model = HNNODE(HNN(HNNEnergyExplicit(dims // 2, dims * 50)), sensitivity=sensitivity, solver = solver)
 
     
 
