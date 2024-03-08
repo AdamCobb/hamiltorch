@@ -54,10 +54,13 @@ def plot_reversibility(forward_trajectories, backward_trajectories, samples, mod
     t = np.linspace(start,end,num=end)
     xnew = np.linspace(t.min(),t.max() ,300)  
     for i in range(num_samples):
-        power_smooth_forward = CubicSpline(t, forward_trajectories[i])(xnew)
-        power_smooth_backward = CubicSpline(t, backward_trajectories[i])(xnew)
-        ax.plot(power_smooth_forward[:,0], power_smooth_forward[:,1] ,label = "Forward Trajectory", color = "blue")
-        ax.plot(power_smooth_backward[:,0], power_smooth_backward[:,1], label = "Backward Trajectory", color = "red")
+        try:
+            power_smooth_forward = CubicSpline(t, forward_trajectories[i])(xnew)
+            power_smooth_backward = CubicSpline(t, backward_trajectories[i])(xnew)
+            ax.plot(power_smooth_forward[:,0], power_smooth_forward[:,1] ,label = "Forward Trajectory", color = "blue")
+            ax.plot(power_smooth_backward[:,0], power_smooth_backward[:,1], label = "Backward Trajectory", color = "red")
+        except:
+            continue
     plt.grid()
     plt.title(f"Model: {model_name}, Solver: {solver}, Sensitivity: {sensitivity}")
     plt.savefig(f"../experiments/{model_name}_{solver}_{sensitivity}_{distribution}_reversibility.png")

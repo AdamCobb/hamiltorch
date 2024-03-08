@@ -9,7 +9,7 @@ def gaussian_log_prob(omega):
 
 def banana_log_prob(w, a = 1, b = 1, c = 1):
     ll = -(1/200) * torch.square(a * w[0]) - .5 * torch.square(c*w[1] + b * torch.square(a * w[0]) - 100 * b)
-    return ll
+    return ll.sum()
 
 
 def ill_conditioned_gaussian_log_prob(w, D):

@@ -16,7 +16,7 @@ experiment_hyperparams = {
         "gaussian": {"step_size":.3, "L":5, "burn": 1000, "N": 2000, "params_init": torch.zeros(3), "log_prob": gaussian_log_prob,
                      "grad_func": lambda p: params_grad(p, gaussian_log_prob)
                       },
-        "ill_conditioned_gaussian": {"step_size": .5, "L":100 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.zeros(30), 
+        "ill_conditioned_gaussian": {"step_size": .5, "L":10 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.zeros(30), 
                                      "log_prob": lambda omega: ill_conditioned_gaussian_log_prob(omega, D = 30),
                                      "grad_func": lambda p: params_grad(p, ill_conditioned_gaussian_log_prob)}
 }
@@ -73,14 +73,17 @@ def run_experiment(model_type, sensitivity, distribution, solver):
 def surrogate_neural_ode_hmc_experiment():
     distributions = ["banana", "gaussian", "ill_conditioned_gaussian"]
     sensitivities = ["adjoint", "autograd"]
-    solvers = ["dopri5"]
+    solvers = ["dopri5", "SynchronousLeapfrog"]
     models = ["HMC", "NNgHMC", "Explicit NNODEgHMC", "NNODEgHMC"]
     error_list = []
     for distribution in distributions:
         for sensitivity in sensitivities:
             for solver in solvers:
+                if (solver == "SynchronousLeapfrog") & (sensitivity == "adjoint"):
+                    continue
                 model_dict = {}
                 for model in models:
+                    
                     
                     experiment_samples, experiment_model, experiment_grad_func = run_experiment(model, sensitivity, distribution, solver)
                     model_dict[model] = {"samples":experiment_samples, "model": experiment_model}
@@ -99,7 +102,7 @@ def surrogate_neural_ode_hmc_experiment():
                     L = experiment_hyperparams[distribution]["L"] 
                     error, forward_traj, backward_traj = compute_reversibility_error(model_dict[model]["model"], initial_conditions,
                                                         t = torch.linspace(0, L * step_size, L ))
-                    plot_reversibility(forward_traj[0:5, :], backward_traj[0:5, :], true_samples, model_name = model, 
+                    plot_reversibility(forward_traj[0:5, :], backward_traj[0:5, :], initial_positions, model_name = model, 
                                        solver = solver , sensitivity = sensitivity, distribution=distribution)
                     error_dict["model"] = model
                     error_dict["sensitivity"] = sensitivity
