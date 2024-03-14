@@ -1358,6 +1358,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
     momentum_trajectories = []
     param_traj_inits = []
     momentum_traj_inits = []
+    grad_trajectories = []
     for n in range(burn):
         if verbose:
             util.progress_bar_update(n)
@@ -1366,10 +1367,11 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
             ham = hamiltonian(params, momentum, log_prob_func, sampler=sampler, integrator=integrator)
 
-            leapfrog_params, leapfrog_momenta, _ = leapfrog_hmc(params, momentum, log_prob_func, steps=num_steps_per_sample, 
+            leapfrog_params, leapfrog_momenta, leapfrog_grad = leapfrog_hmc(params, momentum, log_prob_func, steps=num_steps_per_sample, 
                                                          step_size=step_size, pass_grad = pass_grad)
             param_trajectories.append(torch.stack(leapfrog_params,axis=0))
             momentum_trajectories.append(torch.stack(leapfrog_momenta, axis = 0))
+            grad_trajectories.append(torch.stack(leapfrog_grad, axis = 0).detach())
             param_traj_inits.append(leapfrog_params[0])
             momentum_traj_inits.append(leapfrog_momenta[0])
             params = leapfrog_params[-1].to(device).detach().requires_grad_()
@@ -1435,7 +1437,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     
 
-    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100)
+    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100, gradient_traj=grad_trajectories.detach())
     
     for n in range(num_samples - burn):
         if verbose:

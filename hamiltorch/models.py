@@ -213,7 +213,7 @@ class HNN(nn.Module):
     def __init__(self, Hamiltonian: HNNEnergyExplicit) -> None:
         super(HNN, self).__init__()
         self.H = Hamiltonian
-    def forward(self, t, x, *args, **kwargs):
+    def forward(self, x, *args, **kwargs):
         n = self.H.input_dim 
         q, p = x[..., :n], x[..., n:]
         with torch.set_grad_enabled(True):
@@ -230,7 +230,7 @@ class RMHNN(nn.Module):
     def __init__(self, Hamiltonian: RMHNNEnergyExplicit) -> None:
         super(RMHNN, self).__init__()
         self.H = Hamiltonian
-    def forward(self, t, x, *args, **kwargs):
+    def forward(self, x, *args, **kwargs):
         n = self.H.input_dim // 2 ### here the hamiltonian is expected to take in both q,p
         with torch.set_grad_enabled(True): 
             x = x.requires_grad_(True)
@@ -303,7 +303,7 @@ def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
     return model
 
 
-def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2"):
+def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2", gradient_traj = None):
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
@@ -315,7 +315,11 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
         raise ValueError
     for i in range(epochs):
         _, y_pred = model(X, t)
-        loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., : dims], y)
+        loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., :dims], y)
+
+        if gradient_traj:
+            loss += loss_func(model.ode_func( torch.flatten(y, end_dim = -1))[..., : dims // 2], torch.flatten(gradient_traj, end_dim = -2))
+        
        
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
