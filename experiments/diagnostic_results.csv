@@ -1,0 +1,13 @@
+model,sensitivity,distribution,solver,reversibility_error,time,ess
+HMC,autograd,banana,SynchronousLeapfrog,tensor(nan),11.683464527130127,28.505341099247996
+NNgHMC,autograd,banana,SynchronousLeapfrog,tensor(1.7778e-15),11.93975567817688,34.97923994119564
+Explicit NNODEgHMC,autograd,banana,SynchronousLeapfrog,tensor(4.5122e-11),19.099345922470093,17.68922205004909
+NNODEgHMC,autograd,banana,SynchronousLeapfrog,tensor(4.2210e-11),13.179099559783936,10.316961029646224
+HMC,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),7.99256443977356,1356.7134894599837
+NNgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(1.2018e-14),8.104990243911743,1295.6241829846088
+Explicit NNODEgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(2.8267e-14),10.221236228942871,138.50080558763847
+NNODEgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(1.9310e-14),7.603229284286499,1255.7365303691947
+HMC,autograd,ill_conditioned_gaussian,SynchronousLeapfrog,tensor(1.8235e-12),43.62930512428284,1301.0991824986086
+NNgHMC,autograd,ill_conditioned_gaussian,SynchronousLeapfrog,tensor(1.7754e-12),56.98241710662842,2.726041189780946
+Explicit NNODEgHMC,autograd,ill_conditioned_gaussian,SynchronousLeapfrog,tensor(7.0069e-13),120.42867350578308,3000.0026666690374
+NNODEgHMC,autograd,ill_conditioned_gaussian,SynchronousLeapfrog,tensor(1.2626e-09),66.74482107162476,32.39032274404323
