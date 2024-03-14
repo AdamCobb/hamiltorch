@@ -7,7 +7,11 @@ from hamiltorch.plot_utils import plot_results, plot_reversibility, plot_samples
 from hamiltorch.experiment_utils import banana_log_prob, gaussian_log_prob, ill_conditioned_gaussian_log_prob, compute_reversibility_error, params_grad
 from arviz import ess, autocorr
 import pandas as pd
+import time
 
+
+
+hamiltorch.set_random_seed(13)
 
 experiment_hyperparams = {
     "banana": {"step_size": .1, "L":5 , "burn": 3000, "N": 6000 , "params_init": torch.Tensor([0.,100.
@@ -16,7 +20,7 @@ experiment_hyperparams = {
         "gaussian": {"step_size":.3, "L":5, "burn": 1000, "N": 2000, "params_init": torch.zeros(3), "log_prob": gaussian_log_prob,
                      "grad_func": lambda p: params_grad(p, gaussian_log_prob)
                       },
-        "ill_conditioned_gaussian": {"step_size": .5, "L":10 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.zeros(30), 
+        "ill_conditioned_gaussian": {"step_size": .1, "L":5 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.randn(30), 
                                      "log_prob": lambda omega: ill_conditioned_gaussian_log_prob(omega, D = 30),
                                      "grad_func": lambda p: params_grad(p, ill_conditioned_gaussian_log_prob)}
 }
@@ -73,7 +77,7 @@ def run_experiment(model_type, sensitivity, distribution, solver):
 def surrogate_neural_ode_hmc_experiment():
     distributions = ["banana", "gaussian", "ill_conditioned_gaussian"]
     sensitivities = ["adjoint", "autograd"]
-    solvers = ["dopri5", "SynchronousLeapfrog"]
+    solvers = ["SynchronousLeapfrog"]
     models = ["HMC", "NNgHMC", "Explicit NNODEgHMC", "NNODEgHMC"]
     error_list = []
     for distribution in distributions:
@@ -84,9 +88,12 @@ def surrogate_neural_ode_hmc_experiment():
                 model_dict = {}
                 for model in models:
                     
+                    start = time.time()
                     
                     experiment_samples, experiment_model, experiment_grad_func = run_experiment(model, sensitivity, distribution, solver)
-                    model_dict[model] = {"samples":experiment_samples, "model": experiment_model}
+
+                    end = time.time()
+                    model_dict[model] = {"samples":experiment_samples, "model": experiment_model, "time": end - start}
                     
                 true_samples = torch.stack(model_dict["HMC"]["samples"], 0)
                 
@@ -102,19 +109,23 @@ def surrogate_neural_ode_hmc_experiment():
                     L = experiment_hyperparams[distribution]["L"] 
                     error, forward_traj, backward_traj = compute_reversibility_error(model_dict[model]["model"], initial_conditions,
                                                         t = torch.linspace(0, L * step_size, L ))
-                    plot_reversibility(forward_traj[0:5, :], backward_traj[0:5, :], initial_positions, model_name = model, 
-                                       solver = solver , sensitivity = sensitivity, distribution=distribution)
+                    model_dict[model]["forward"] = forward_traj[0:5, :]
+                    model_dict[model]["backward"] = backward_traj[0:5, :]
+
                     error_dict["model"] = model
                     error_dict["sensitivity"] = sensitivity
                     error_dict["distribution"] = distribution
                     error_dict["solver"] = solver
                     error_dict["reversibility_error"] = error
+                    error_dict["time"] = model_dict[model]["time"]
                     # error_dict["acf"] = autocorr(torch.stack(model_dict[model]["samples"],0).numpy()[None, :, :])
-                    error_dict["ess"] = ess(az.convert_to_inference_data(torch.stack(model_dict[model]["samples"],0).numpy()[None, : ,: ])).mean
-                    print(error_dict)
+                    error_dict["ess"] = ess(az.convert_to_inference_data(torch.stack(model_dict[model]["samples"],0).numpy()[None, : ,: ])).x.mean().values
                     error_list.append(error_dict)
-    
-    pd.DataFrame(error_dict).to_csv("experiments/diagnostic_results.csv", index = False)
+
+                plot_samples(model_dict, mean = experiment_hyperparams[distribution]["params_init"], distribution_name=distribution)
+                plot_reversibility(model_dict, initial_positions,
+                                        distribution=distribution)
+    pd.DataFrame(error_list).to_csv("../experiments/diagnostic_results.csv", index = False)
     
 
 

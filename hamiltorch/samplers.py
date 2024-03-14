@@ -1437,7 +1437,7 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     
 
-    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100, gradient_traj=grad_trajectories.detach())
+    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100, gradient_traj=torch.stack(grad_trajectories, axis = 0).detach())
     
     for n in range(num_samples - burn):
         if verbose:

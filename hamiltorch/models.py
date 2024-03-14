@@ -316,10 +316,10 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
     for i in range(epochs):
         _, y_pred = model(X, t)
         loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., :dims], y)
-
-        if gradient_traj:
-            loss += loss_func(model.ode_func( torch.flatten(y, end_dim = -1))[..., : dims // 2], torch.flatten(gradient_traj, end_dim = -2))
-        
+        if gradient_traj is not None:
+            observed_flattened = torch.flatten(gradient_traj, end_dim = -2)
+            input_flattened = torch.flatten(y, end_dim = -2)
+            loss += loss_func(model.odefunc(input_flattened)[..., dims // 2 : ], observed_flattened)
        
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
