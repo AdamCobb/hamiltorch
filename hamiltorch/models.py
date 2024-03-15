@@ -5,6 +5,24 @@ from torch.autograd import grad
 from torchdyn.core import NeuralODE
 
 
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = float('inf')
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+
+
 class NNgHMC(nn.Module):
     """
     simple model which aims to model the gradient of the Hamiltonian directly 
@@ -274,6 +292,7 @@ class NNODEgRMHMC(nn.Module):
 
 
 def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
+    early_stopper = EarlyStopper(patience = 10)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate Model")
      # Compute and print loss.
@@ -281,10 +300,12 @@ def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
         loss_func = nn.MSELoss()
     else:
         raise ValueError
-    for _ in range(epochs):
+    for epoch in range(epochs):
 
         y_pred = model(X)
         loss = loss_func(y_pred, y)
+        if early_stopper.early_stop(loss):             
+            break
        
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
@@ -300,10 +321,11 @@ def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
         # Calling the step function on an Optimizer makes an update to its
         # parameters
         optimizer.step()
-    return model
+    return model, epoch
 
 
 def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2", gradient_traj = None):
+    early_stopper = EarlyStopper(patience = 10)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
@@ -313,14 +335,20 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
         
     else:
         raise ValueError
-    for i in range(epochs):
+    for epoch in range(epochs):
         _, y_pred = model(X, t)
         loss = loss_func(torch.swapaxes(y_pred, 0, 1)[..., :dims], y)
         if gradient_traj is not None:
             observed_flattened = torch.flatten(gradient_traj, end_dim = -2)
             input_flattened = torch.flatten(y, end_dim = -2)
-            loss += loss_func(model.odefunc(input_flattened)[..., dims // 2 : ], observed_flattened)
-       
+            gradient_loss = loss_func(model.odefunc(input_flattened)[..., dims // 2 : ], observed_flattened)
+        else:
+            gradient_loss = 0.0
+
+
+        total_loss = gradient_loss + loss
+        if early_stopper.early_stop(total_loss):             
+                break
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
         # weights of the model). This is because by default, gradients are
@@ -330,9 +358,9 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
 
         # Backward pass: compute gradient of the loss with respect to model
         # parameters
-        loss.backward()
+        total_loss.backward()
 
         # Calling the step function on an Optimizer makes an update to its
         # parameters
         optimizer.step()
-    return model
+    return model, epoch

@@ -12,13 +12,19 @@ def banana_log_prob(w, a = 1, b = 1, c = 1):
     return ll.sum()
 
 
-def ill_conditioned_gaussian_log_prob(w, D):
-    hamiltorch.set_random_seed(123)
-    diagonal = torch.distributions.Uniform(0, 100).sample(sample_shape=(D,))
-    diagonal[0] = .1
-    diagonal[-1] = 1000
-    ll = torch.distributions.MultivariateNormal(torch.zeros(D), covariance_matrix=torch.diag(diagonal)).log_prob(w).sum()
+def high_dimensional_gaussian_log_prob(w, D):
+    ll = torch.distributions.MultivariateNormal(torch.zeros(D), covariance_matrix=torch.diag(torch.ones(D))).log_prob(w).sum()
     return ll
+
+def normal_normal_conjugate(w):
+    mu0 = 0.0
+    tau = 1.5 
+    sigma = torch.exp(w[1]) + .001
+    ll = torch.distributions.Normal(mu0 , tau).log_prob(w[0]).sum()
+    ll += torch.distributions.InverseGamma(2, 3).log_prob(sigma).sum()
+    ll += torch.distributions.Normal(1.7, sigma).log_prob(w[0]).sum()
+    return ll
+    
 
 
 def compute_reversibility_error(model, test_initial_conditions, t):

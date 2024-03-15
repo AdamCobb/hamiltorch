@@ -1278,8 +1278,8 @@ def sample_surrogate_hmc(log_prob_func, params_init, num_samples = 10, num_steps
     X = torch.cat(param_trajectories)
     y = torch.cat(gradient_trajectories)
     dims = X.shape[1]
-    fitted_model = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim =  100 * dims), X.detach(), y.detach(), epochs = 100)
-    
+    fitted_model, _ = train(NNgHMC(input_dim = dims, output_dim = dims, hidden_dim =  100 * dims), X.detach(), y.detach(), epochs = 100)
+    print(f"took {_} epochs")
     return sample(log_prob_func, params_init=params, num_samples=num_samples - burn, num_steps_per_sample=num_steps_per_sample, step_size=step_size,
                   burn = 0, sampler = sampler, integrator = integrator, debug = debug, desired_accept_rate=desired_accept_rate, store_on_GPU=store_on_GPU,
                   pass_grad=fitted_model.forward, verbose=verbose), fitted_model
@@ -1437,8 +1437,8 @@ def sample_neural_ode_surrogate_hmc(log_prob_func, params_init, num_samples = 10
 
     
 
-    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 100, gradient_traj=torch.stack(grad_trajectories, axis = 0).detach())
-    
+    fitted_model, _ = train_ode(model, X.detach(), y.detach(), t,  epochs = 100, gradient_traj=torch.stack(grad_trajectories, axis = 0).detach())
+    print(f"Took {_} epochs")
     for n in range(num_samples - burn):
         if verbose:
             util.progress_bar_update(n)
@@ -1688,12 +1688,12 @@ def sample_neural_ode_surrogate_rmhmc(log_prob_func, params_init, num_samples = 
     dims = X.shape[1] 
 
 
-    model = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims  , hidden_dim= 100 * dims))
+    model, _ = NNODEgRMHMC(RMHNNEnergyDeriv(input_dim = dims  , hidden_dim= 100 * dims))
     if model_type == "explicit_hamiltonian":
         model = RMHNNODE(RMHNN(RMHNNEnergyExplicit(dims // 2, dims * 50)), sensitivity="adjoint")
 
 
-    fitted_model = train_ode(model, X.detach(), y.detach(), t,  epochs = 500)
+    fitted_model, _ = train_ode(model, X.detach(), y.detach(), t,  epochs = 500)
     
     for n in range(num_samples - burn):
         if verbose:

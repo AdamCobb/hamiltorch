@@ -4,7 +4,7 @@ import arviz as az
 from hamiltorch.samplers import leapfrog
 from hamiltorch.ode import SynchronousLeapfrog
 from hamiltorch.plot_utils import plot_results, plot_reversibility, plot_samples
-from hamiltorch.experiment_utils import banana_log_prob, gaussian_log_prob, ill_conditioned_gaussian_log_prob, compute_reversibility_error, params_grad
+from hamiltorch.experiment_utils import banana_log_prob, gaussian_log_prob, high_dimensional_gaussian_log_prob, compute_reversibility_error, params_grad, normal_normal_conjugate
 from arviz import ess, autocorr
 import pandas as pd
 import time
@@ -20,9 +20,12 @@ experiment_hyperparams = {
         "gaussian": {"step_size":.3, "L":5, "burn": 1000, "N": 2000, "params_init": torch.zeros(3), "log_prob": gaussian_log_prob,
                      "grad_func": lambda p: params_grad(p, gaussian_log_prob)
                       },
-        "ill_conditioned_gaussian": {"step_size": .1, "L":5 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.randn(30), 
-                                     "log_prob": lambda omega: ill_conditioned_gaussian_log_prob(omega, D = 30),
-                                     "grad_func": lambda p: params_grad(p, ill_conditioned_gaussian_log_prob)}
+        "high_dimensional_gaussian": {"step_size": .1, "L":5 , "burn": 3000 , "N": 6000 , "D": 30, "params_init": torch.randn(30), 
+                                     "log_prob": lambda omega: high_dimensional_gaussian_log_prob(omega, D = 30),
+                                     "grad_func": lambda p: params_grad(p, high_dimensional_gaussian_log_prob)},
+        "normal_normal": {"step_size": .1, "L":5 , "burn": 3000 , "N": 6000 , "params_init": torch.ones(2), 
+                                     "log_prob": lambda omega: normal_normal_conjugate(omega),
+                                     "grad_func": lambda p: params_grad(p, normal_normal_conjugate)}
 }
 
 
@@ -75,7 +78,7 @@ def run_experiment(model_type, sensitivity, distribution, solver):
 
 
 def surrogate_neural_ode_hmc_experiment():
-    distributions = ["banana", "gaussian", "ill_conditioned_gaussian"]
+    distributions = ["banana", "gaussian", "high_dimensional_gaussian", "normal_normal"]
     sensitivities = ["adjoint", "autograd"]
     solvers = ["SynchronousLeapfrog"]
     models = ["HMC", "NNgHMC", "Explicit NNODEgHMC", "NNODEgHMC"]
