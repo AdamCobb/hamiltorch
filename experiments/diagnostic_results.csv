@@ -1,17 +1,161 @@
-model,sensitivity,distribution,solver,reversibility_error,time,ess
-HMC,autograd,banana,SynchronousLeapfrog,tensor(nan),11.605763912200928,28.505341099247996
-NNgHMC,autograd,banana,SynchronousLeapfrog,tensor(2.9297e-13),11.251442670822144,2.248966081628963
-Explicit NNODEgHMC,autograd,banana,SynchronousLeapfrog,tensor(4.5122e-11),18.764366149902344,17.68922205004909
-NNODEgHMC,autograd,banana,SynchronousLeapfrog,tensor(4.2210e-11),13.117872476577759,10.316961029646224
-HMC,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),7.9006736278533936,1356.7134894599837
-NNgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(9.6797e-15),7.71763277053833,1260.2885320321832
-Explicit NNODEgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(3.1141e-14),8.515171527862549,128.7874510893437
-NNODEgHMC,autograd,gaussian,SynchronousLeapfrog,tensor(2.0160e-14),6.72006893157959,1259.0757786388701
-HMC,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),24.488908529281616,194.1564757018208
-NNgHMC,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.5995e-15),38.0221745967865,183.5032112010208
-Explicit NNODEgHMC,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1495e-14),108.15814447402954,153.30345184342593
-NNODEgHMC,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0762e-14),55.22762060165405,184.29134401132535
-HMC,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),38.62966203689575,306.15232982686865
-NNgHMC,autograd,normal_normal,SynchronousLeapfrog,tensor(2.3725e-15),36.16249442100525,333.48322880927367
-Explicit NNODEgHMC,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3444e-14),33.165157079696655,134.59632442274
-NNODEgHMC,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3671e-14),30.274482488632202,326.77332047624554
+model,training_size,sensitivity,distribution,solver,reversibility_error,time,ess
+HMC,0.1,autograd,banana,SynchronousLeapfrog,tensor(nan),11.602229595184326,28.505341099247996
+NNgHMC,0.1,autograd,banana,SynchronousLeapfrog,tensor(1.7613e-15),10.00622272491455,13.78200073807367
+Explicit NNODEgHMC,0.1,autograd,banana,SynchronousLeapfrog,tensor(2.4378e-16),25.640816688537598,12.24256835048841
+NNODEgHMC,0.1,autograd,banana,SynchronousLeapfrog,tensor(3.7552e-11),12.641744136810303,8.857058716457022
+HMC,0.1,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.131711483001709,1356.7134894599837
+NNgHMC,0.1,autograd,gaussian,SynchronousLeapfrog,tensor(1.4630e-14),7.526895046234131,2637.0407178149103
+Explicit NNODEgHMC,0.1,autograd,gaussian,SynchronousLeapfrog,tensor(2.8787e-14),11.64556074142456,159.09607439193323
+NNODEgHMC,0.1,autograd,gaussian,SynchronousLeapfrog,tensor(2.4941e-14),5.866521596908569,2570.583885473268
+HMC,0.1,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.09095573425293,194.1564757018208
+NNgHMC,0.1,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6567e-15),26.245694637298584,324.2256220779605
+Explicit NNODEgHMC,0.1,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(8.9697e-15),39.81805062294006,60.26902464894103
+NNODEgHMC,0.1,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0730e-14),20.732367515563965,319.112560822156
+HMC,0.1,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),39.23285150527954,306.15232982686865
+NNgHMC,0.1,autograd,normal_normal,SynchronousLeapfrog,tensor(2.3318e-15),31.413572788238525,630.3064294917692
+Explicit NNODEgHMC,0.1,autograd,normal_normal,SynchronousLeapfrog,tensor(1.8791e-14),32.608010053634644,219.35659850869274
+NNODEgHMC,0.1,autograd,normal_normal,SynchronousLeapfrog,tensor(1.5304e-14),19.330368041992188,657.995063820588
+HMC,0.2,autograd,banana,SynchronousLeapfrog,tensor(nan),11.726166725158691,28.505341099247996
+NNgHMC,0.2,autograd,banana,SynchronousLeapfrog,tensor(1.9371e-15),10.149789571762085,13.336838395031403
+Explicit NNODEgHMC,0.2,autograd,banana,SynchronousLeapfrog,tensor(1.4872e-14),25.720030069351196,1.6367442398231362
+NNODEgHMC,0.2,autograd,banana,SynchronousLeapfrog,tensor(4.7156e-11),13.143708229064941,1.9157524227131293
+HMC,0.2,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.304901123046875,1356.7134894599837
+NNgHMC,0.2,autograd,gaussian,SynchronousLeapfrog,tensor(8.3503e-15),7.9880900382995605,2512.927375330677
+Explicit NNODEgHMC,0.2,autograd,gaussian,SynchronousLeapfrog,tensor(2.2435e-14),11.99743127822876,149.04512912672593
+NNODEgHMC,0.2,autograd,gaussian,SynchronousLeapfrog,tensor(1.6222e-14),6.134160041809082,2448.1040010127367
+HMC,0.2,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.437689542770386,194.1564757018208
+NNgHMC,0.2,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.7428e-15),27.524872303009033,319.576395274816
+Explicit NNODEgHMC,0.2,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0140e-14),47.55476522445679,60.56459860014776
+NNODEgHMC,0.2,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1183e-14),23.72710394859314,313.7667971108445
+HMC,0.2,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),39.149011850357056,306.15232982686865
+NNgHMC,0.2,autograd,normal_normal,SynchronousLeapfrog,tensor(1.8634e-15),32.79813313484192,592.1731511590762
+Explicit NNODEgHMC,0.2,autograd,normal_normal,SynchronousLeapfrog,tensor(1.9129e-14),34.29003286361694,241.17390603989492
+NNODEgHMC,0.2,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3477e-14),20.74133825302124,603.2631016151419
+HMC,0.30000000000000004,autograd,banana,SynchronousLeapfrog,tensor(nan),11.81268048286438,28.505341099247996
+NNgHMC,0.30000000000000004,autograd,banana,SynchronousLeapfrog,tensor(1.9746e-15),10.082671165466309,4.6478548519557075
+Explicit NNODEgHMC,0.30000000000000004,autograd,banana,SynchronousLeapfrog,tensor(3.1108e-13),25.808932304382324,8.829220619849782
+NNODEgHMC,0.30000000000000004,autograd,banana,SynchronousLeapfrog,tensor(3.2897e-11),12.979791641235352,2.9350671743684495
+HMC,0.30000000000000004,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.250048875808716,1356.7134894599837
+NNgHMC,0.30000000000000004,autograd,gaussian,SynchronousLeapfrog,tensor(9.5365e-15),7.665944576263428,2347.887683997253
+Explicit NNODEgHMC,0.30000000000000004,autograd,gaussian,SynchronousLeapfrog,tensor(2.4033e-14),11.880827903747559,142.9170691572676
+NNODEgHMC,0.30000000000000004,autograd,gaussian,SynchronousLeapfrog,tensor(1.6258e-14),6.404731035232544,2284.5586272925225
+HMC,0.30000000000000004,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.480981588363647,194.1564757018208
+NNgHMC,0.30000000000000004,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6359e-15),29.20236349105835,298.334244915042
+Explicit NNODEgHMC,0.30000000000000004,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(9.5303e-15),54.924444913864136,64.27539576154722
+NNODEgHMC,0.30000000000000004,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1010e-14),27.091466426849365,301.58763439802476
+HMC,0.30000000000000004,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),39.576417446136475,306.15232982686865
+NNgHMC,0.30000000000000004,autograd,normal_normal,SynchronousLeapfrog,tensor(3.6394e-15),32.62108588218689,576.8338645943963
+Explicit NNODEgHMC,0.30000000000000004,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3707e-14),34.87758183479309,189.85900923730196
+NNODEgHMC,0.30000000000000004,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3995e-14),21.975468397140503,598.1625449402604
+HMC,0.4,autograd,banana,SynchronousLeapfrog,tensor(nan),11.829042911529541,28.505341099247996
+NNgHMC,0.4,autograd,banana,SynchronousLeapfrog,tensor(2.5440e-15),10.294259548187256,1.408646561861304
+Explicit NNODEgHMC,0.4,autograd,banana,SynchronousLeapfrog,tensor(2.8093e-14),26.288330078125,2.852833713449572
+NNODEgHMC,0.4,autograd,banana,SynchronousLeapfrog,tensor(5.0358e-11),13.164225339889526,2.7295597120825548
+HMC,0.4,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.46913456916809,1356.7134894599837
+NNgHMC,0.4,autograd,gaussian,SynchronousLeapfrog,tensor(6.0443e-15),8.158804655075073,2188.10027554388
+Explicit NNODEgHMC,0.4,autograd,gaussian,SynchronousLeapfrog,tensor(3.0543e-14),12.379674434661865,136.61406190703295
+NNODEgHMC,0.4,autograd,gaussian,SynchronousLeapfrog,tensor(1.6530e-14),6.559540510177612,2135.756183823885
+HMC,0.4,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.689927577972412,194.1564757018208
+NNgHMC,0.4,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(3.0140e-15),30.345085859298706,288.8822945300261
+Explicit NNODEgHMC,0.4,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(8.9158e-15),63.19509482383728,51.39686515670394
+NNODEgHMC,0.4,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0899e-14),31.449981927871704,288.44929958204796
+HMC,0.4,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),38.930400371551514,306.15232982686865
+NNgHMC,0.4,autograd,normal_normal,SynchronousLeapfrog,tensor(2.6232e-15),33.75598382949829,559.6013416039128
+Explicit NNODEgHMC,0.4,autograd,normal_normal,SynchronousLeapfrog,tensor(1.8273e-14),36.976067543029785,176.65024271020738
+NNODEgHMC,0.4,autograd,normal_normal,SynchronousLeapfrog,tensor(1.4084e-14),23.42135524749756,551.3366884443636
+HMC,0.5,autograd,banana,SynchronousLeapfrog,tensor(nan),11.86549711227417,28.505341099247996
+NNgHMC,0.5,autograd,banana,SynchronousLeapfrog,tensor(1.7562e-15),10.591956615447998,29.499708019133443
+Explicit NNODEgHMC,0.5,autograd,banana,SynchronousLeapfrog,tensor(3.0230e-13),27.252869367599487,1.3793814666288968
+NNODEgHMC,0.5,autograd,banana,SynchronousLeapfrog,tensor(3.7844e-11),13.314877033233643,30.83469289058995
+HMC,0.5,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.3861985206604,1356.7134894599837
+NNgHMC,0.5,autograd,gaussian,SynchronousLeapfrog,tensor(9.9650e-15),7.949336767196655,2052.532338728965
+Explicit NNODEgHMC,0.5,autograd,gaussian,SynchronousLeapfrog,tensor(2.1383e-14),12.0556640625,134.73912837436583
+NNODEgHMC,0.5,autograd,gaussian,SynchronousLeapfrog,tensor(2.1037e-14),6.764488697052002,1987.3558891023551
+HMC,0.5,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.379054069519043,194.1564757018208
+NNgHMC,0.5,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.7599e-15),31.81774878501892,267.1191262431493
+Explicit NNODEgHMC,0.5,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0010e-14),70.39719653129578,48.279417480692764
+NNODEgHMC,0.5,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0542e-14),33.56632947921753,267.99132448160293
+HMC,0.5,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),37.93249273300171,306.15232982686865
+NNgHMC,0.5,autograd,normal_normal,SynchronousLeapfrog,tensor(3.0084e-15),34.31756949424744,526.6389653525732
+Explicit NNODEgHMC,0.5,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3586e-14),38.70176076889038,178.1909345882243
+NNODEgHMC,0.5,autograd,normal_normal,SynchronousLeapfrog,tensor(1.7221e-14),24.783111810684204,535.1803526093813
+HMC,0.6,autograd,banana,SynchronousLeapfrog,tensor(nan),11.271934032440186,28.505341099247996
+NNgHMC,0.6,autograd,banana,SynchronousLeapfrog,tensor(1.9407e-15),10.901622295379639,1.3741189430191216
+Explicit NNODEgHMC,0.6,autograd,banana,SynchronousLeapfrog,tensor(5.5309e-15),28.140045166015625,4.765405401325207
+NNODEgHMC,0.6,autograd,banana,SynchronousLeapfrog,tensor(5.4722e-11),13.976370573043823,20.426497875987373
+HMC,0.6,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.276348114013672,1356.7134894599837
+NNgHMC,0.6,autograd,gaussian,SynchronousLeapfrog,tensor(7.7501e-15),8.021640539169312,1903.9153009926933
+Explicit NNODEgHMC,0.6,autograd,gaussian,SynchronousLeapfrog,tensor(3.1160e-14),12.250637769699097,113.31904545495762
+NNODEgHMC,0.6,autograd,gaussian,SynchronousLeapfrog,tensor(1.5259e-14),6.976499319076538,1840.239502987314
+HMC,0.6,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.370206832885742,194.1564757018208
+NNgHMC,0.6,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6864e-15),32.56300401687622,255.6940874935775
+Explicit NNODEgHMC,0.6,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0542e-14),78.95750260353088,48.697321401800316
+NNODEgHMC,0.6,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0919e-14),36.54907774925232,252.62942680485722
+HMC,0.6,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),38.93742656707764,306.15232982686865
+NNgHMC,0.6,autograd,normal_normal,SynchronousLeapfrog,tensor(2.0076e-15),34.55916166305542,483.6971415896953
+Explicit NNODEgHMC,0.6,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3726e-14),40.23255658149719,169.9541219227198
+NNODEgHMC,0.6,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2846e-14),26.103530406951904,491.97848392194146
+HMC,0.7000000000000001,autograd,banana,SynchronousLeapfrog,tensor(nan),11.65147089958191,28.505341099247996
+NNgHMC,0.7000000000000001,autograd,banana,SynchronousLeapfrog,tensor(3.5773e-15),10.892371654510498,1.9790090820472592
+Explicit NNODEgHMC,0.7000000000000001,autograd,banana,SynchronousLeapfrog,tensor(3.8073e-14),29.649309873580933,7.372233016657728
+NNODEgHMC,0.7000000000000001,autograd,banana,SynchronousLeapfrog,tensor(4.3957e-11),13.667273998260498,1.8053905061784175
+HMC,0.7000000000000001,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.33066701889038,1356.7134894599837
+NNgHMC,0.7000000000000001,autograd,gaussian,SynchronousLeapfrog,tensor(1.1010e-14),8.156269311904907,1749.167210996344
+Explicit NNODEgHMC,0.7000000000000001,autograd,gaussian,SynchronousLeapfrog,tensor(1.9390e-14),12.406931400299072,111.96807008466355
+NNODEgHMC,0.7000000000000001,autograd,gaussian,SynchronousLeapfrog,tensor(1.3741e-14),7.328670978546143,1705.8918150892487
+HMC,0.7000000000000001,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.64943552017212,194.1564757018208
+NNgHMC,0.7000000000000001,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.7561e-15),33.520872831344604,235.58598595636562
+Explicit NNODEgHMC,0.7000000000000001,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(9.1957e-15),88.0524754524231,47.432062972688314
+NNODEgHMC,0.7000000000000001,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1132e-14),39.75745415687561,235.2396314386675
+HMC,0.7000000000000001,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),38.88904070854187,306.15232982686865
+NNgHMC,0.7000000000000001,autograd,normal_normal,SynchronousLeapfrog,tensor(3.6152e-15),35.98689293861389,443.55021973193686
+Explicit NNODEgHMC,0.7000000000000001,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3752e-14),43.149691104888916,153.47842942437524
+NNODEgHMC,0.7000000000000001,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3930e-14),27.175014972686768,439.3370865485569
+HMC,0.8,autograd,banana,SynchronousLeapfrog,tensor(nan),11.671921491622925,28.505341099247996
+NNgHMC,0.8,autograd,banana,SynchronousLeapfrog,tensor(5.8361e-13),11.21156620979309,1.3160419570274893
+Explicit NNODEgHMC,0.8,autograd,banana,SynchronousLeapfrog,tensor(3.1328e-13),31.353854179382324,5.922841768647142
+NNODEgHMC,0.8,autograd,banana,SynchronousLeapfrog,tensor(4.8027e-11),13.783812284469604,5.804797401602562
+HMC,0.8,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.31273078918457,1356.7134894599837
+NNgHMC,0.8,autograd,gaussian,SynchronousLeapfrog,tensor(9.5416e-15),8.257896900177002,1596.1000928874194
+Explicit NNODEgHMC,0.8,autograd,gaussian,SynchronousLeapfrog,tensor(2.8829e-14),12.66451907157898,122.91798561033771
+NNODEgHMC,0.8,autograd,gaussian,SynchronousLeapfrog,tensor(2.1107e-14),7.469537973403931,1559.4374726740405
+HMC,0.8,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.580549240112305,194.1564757018208
+NNgHMC,0.8,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.7143e-15),34.424962759017944,217.13880168140003
+Explicit NNODEgHMC,0.8,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(9.9285e-15),96.64354252815247,42.318480404390655
+NNODEgHMC,0.8,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1159e-14),44.17489147186279,214.9081900036216
+HMC,0.8,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),37.32396984100342,306.15232982686865
+NNgHMC,0.8,autograd,normal_normal,SynchronousLeapfrog,tensor(2.7274e-15),36.340505838394165,391.5676080027248
+Explicit NNODEgHMC,0.8,autograd,normal_normal,SynchronousLeapfrog,tensor(1.8512e-14),46.32345628738403,154.4828899534348
+NNODEgHMC,0.8,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2735e-14),28.61783528327942,388.16705705315354
+HMC,0.9,autograd,banana,SynchronousLeapfrog,tensor(nan),11.634050130844116,28.505341099247996
+NNgHMC,0.9,autograd,banana,SynchronousLeapfrog,tensor(1.7593e-15),11.269264698028564,9.181199237414207
+Explicit NNODEgHMC,0.9,autograd,banana,SynchronousLeapfrog,tensor(3.0187e-13),33.270854234695435,11.266568167334768
+NNODEgHMC,0.9,autograd,banana,SynchronousLeapfrog,tensor(3.9884e-11),13.909813404083252,18.305605768859564
+HMC,0.9,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.27569031715393,1356.7134894599837
+NNgHMC,0.9,autograd,gaussian,SynchronousLeapfrog,tensor(1.0383e-14),8.31551218032837,1441.6406522193408
+Explicit NNODEgHMC,0.9,autograd,gaussian,SynchronousLeapfrog,tensor(2.1643e-14),12.795949220657349,132.57788276270568
+NNODEgHMC,0.9,autograd,gaussian,SynchronousLeapfrog,tensor(2.2284e-14),7.5963428020477295,1395.7337496323833
+HMC,0.9,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.031368732452393,194.1564757018208
+NNgHMC,0.9,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(3.0110e-15),35.554368019104004,198.96010341507377
+Explicit NNODEgHMC,0.9,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(9.9357e-15),106.49106192588806,38.80161756230476
+NNODEgHMC,0.9,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.1221e-14),48.34114408493042,198.17289188261876
+HMC,0.9,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),39.006951332092285,306.15232982686865
+NNgHMC,0.9,autograd,normal_normal,SynchronousLeapfrog,tensor(2.5345e-15),36.293211698532104,366.94954883719595
+Explicit NNODEgHMC,0.9,autograd,normal_normal,SynchronousLeapfrog,tensor(2.3107e-14),49.68240451812744,150.86050719361546
+NNODEgHMC,0.9,autograd,normal_normal,SynchronousLeapfrog,tensor(9.2819e-15),29.63290047645569,359.8433701481773
+HMC,1.0,autograd,banana,SynchronousLeapfrog,tensor(nan),11.611523389816284,28.505341099247996
+NNgHMC,1.0,autograd,banana,SynchronousLeapfrog,tensor(1.7778e-15),11.456319570541382,34.97923994119564
+Explicit NNODEgHMC,1.0,autograd,banana,SynchronousLeapfrog,tensor(4.8172e-14),35.34070038795471,2.0399773549725717
+NNODEgHMC,1.0,autograd,banana,SynchronousLeapfrog,tensor(4.2210e-11),13.85578966140747,10.316961029646224
+HMC,1.0,autograd,gaussian,SynchronousLeapfrog,tensor(8.6013e-15),8.253857135772705,1356.7134894599837
+NNgHMC,1.0,autograd,gaussian,SynchronousLeapfrog,tensor(1.2018e-14),8.385669946670532,1295.6241829846088
+Explicit NNODEgHMC,1.0,autograd,gaussian,SynchronousLeapfrog,tensor(2.8706e-14),13.119718551635742,94.11759976799173
+NNODEgHMC,1.0,autograd,gaussian,SynchronousLeapfrog,tensor(1.9310e-14),7.78948974609375,1255.7365303691947
+HMC,1.0,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.6669e-15),25.342178344726562,194.1564757018208
+NNgHMC,1.0,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(2.5995e-15),37.24530243873596,183.5032112010208
+Explicit NNODEgHMC,1.0,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(9.8576e-15),122.07076787948608,32.908086690349734
+NNODEgHMC,1.0,autograd,high_dimensional_gaussian,SynchronousLeapfrog,tensor(1.0762e-14),54.248347997665405,184.29134401132535
+HMC,1.0,autograd,normal_normal,SynchronousLeapfrog,tensor(1.2303e-15),39.22426652908325,306.15232982686865
+NNgHMC,1.0,autograd,normal_normal,SynchronousLeapfrog,tensor(2.3725e-15),36.59102249145508,333.48322880927367
+Explicit NNODEgHMC,1.0,autograd,normal_normal,SynchronousLeapfrog,tensor(2.6409e-14),51.878971576690674,125.06847950399244
+NNODEgHMC,1.0,autograd,normal_normal,SynchronousLeapfrog,tensor(1.3671e-14),30.81706666946411,326.77332047624554

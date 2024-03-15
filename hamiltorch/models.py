@@ -73,7 +73,7 @@ class RMHNNEnergyDeriv(nn.Module):
         n = self.input_dim  ### here it is both p, q concatenated
         state_space = x[..., :n] 
         dH = self.potential_deriv(state_space)
-        dHdq, dHdp = dH[..., : n // 2], dH[..., n // 2 ]
+        dHdq, dHdp = dH[..., : n // 2], dH[..., n // 2: ]
         return  torch.cat([dHdp, -dHdq], - 1)
 
 
@@ -105,47 +105,32 @@ class PSD(nn.Module):
     def __init__(self, input_dim, hidden_dim, diag_dim):
         super(PSD, self).__init__()
         self.diag_dim = diag_dim
-        if diag_dim == 1:
-            self.linear1 = nn.Linear(input_dim, hidden_dim)
-            self.linear2 = nn.Linear(hidden_dim, diag_dim)
+        self.off_diag_dim = int(diag_dim * (diag_dim - 1) / 2)
+        self.linear1 = nn.Linear(input_dim, hidden_dim)
+        self.linear2 = nn.Linear(hidden_dim, self.diag_dim + self.off_diag_dim)
 
-            for l in [self.linear1, self.linear2]:
-                nn.init.orthogonal_(l.weight) # use a principled initialization
-            
-            self.nonlinearity = nn.Tanh()
-        else:
-            assert diag_dim > 1
-            self.diag_dim = diag_dim
-            self.off_diag_dim = int(diag_dim * (diag_dim - 1) / 2)
-            self.linear1 = nn.Linear(input_dim, hidden_dim)
-            self.linear2 = nn.Linear(hidden_dim, self.diag_dim + self.off_diag_dim)
-
-            for l in [self.linear1, self.linear2]:
-                nn.init.orthogonal_(l.weight) # use a principled initialization
-            
-            self.nonlinearity = nn.Tanh()
+        for l in [self.linear1, self.linear2]:
+            nn.init.orthogonal_(l.weight) # use a principled initialization
+        
+        self.nonlinearity = nn.Tanh()
 
     def forward(self, q):
-        if self.diag_dim == 1:
-            h = self.nonlinearity( self.linear1(q) )
-            h = self.nonlinearity( self.linear2(h) )
-            return h*h + 0.1
-        else:
-            bs = q.shape[0]
-            h = self.nonlinearity( self.linear1(q) )
-            diag, off_diag = torch.split(self.linear2(h), [self.diag_dim, self.off_diag_dim], dim=1)
-            # diag = nn.functional.relu( self.linear4(h) )
 
-            L = torch.diag_embed(nn.Softplus()(diag))
+        bs = q.shape[0]
+        h = self.nonlinearity( self.linear1(q) )
+        diag, off_diag = torch.split(self.linear2(h), [self.diag_dim, self.off_diag_dim], dim=1)
+        # diag = nn.functional.relu( self.linear4(h) )
 
-            ind = np.tril_indices(self.diag_dim, k=-1)
-            flat_ind = np.ravel_multi_index(ind, (self.diag_dim, self.diag_dim))
-            L = torch.flatten(L, start_dim=1)
-            L[:, flat_ind] = off_diag
-            L = torch.reshape(L, (bs, self.diag_dim, self.diag_dim))
+        L = torch.diag_embed(nn.Softplus()(diag))
 
-            D = torch.bmm(L, L.permute(0, 2, 1))
-            return D
+        ind = np.tril_indices(self.diag_dim, k=-1)
+        flat_ind = np.ravel_multi_index(ind, (self.diag_dim, self.diag_dim))
+        L = torch.flatten(L, start_dim=1)
+        L[:, flat_ind] = off_diag
+        L = torch.reshape(L, (bs, self.diag_dim, self.diag_dim))
+
+        D = torch.bmm(L, L.permute(0, 2, 1))
+        return D
 
 
 class PSDPotential(nn.Module):
@@ -219,7 +204,7 @@ class RMHNNEnergyExplicit(nn.Module):
 
 
     def forward(self, x, *args, **kwargs):
-        q, p = x[..., :self.input_dim], x[..., self.input_dim:  2*self.input_dim]
+        q, p = x[..., :self.input_dim], x[..., self.input_dim:]
 
         mass_matrix, potential = self.hamiltonian_components(q)
         kinetic = .5 * torch.bmm(p[:, None, :], torch.bmm(mass_matrix, p[:, :, None]))

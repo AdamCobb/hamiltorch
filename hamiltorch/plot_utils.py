@@ -49,7 +49,7 @@ def plot_reversibility(sample_dict: Dict, samples, distribution = ""):
     # Add samples 
     for index, label in enumerate(sample_dict):
         samples = torch.stack(sample_dict[label]["samples"],0)
-        axs.flat[index].scatter(samples[:, 0], samples[:, 1], alpha = .3, color = "blue")
+        axs.flat[index].scatter(samples[:, 0], samples[:, 1], alpha = .3, color = "green")
         forward_trajectories = sample_dict[label]["forward"]
         backward_trajectories = sample_dict[label]["backward"]
         num_samples = forward_trajectories.shape[0]
