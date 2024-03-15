@@ -79,15 +79,13 @@ def run_experiment(model_type, sensitivity, distribution, solver):
 
 def surrogate_neural_ode_hmc_experiment():
     distributions = ["banana", "gaussian", "high_dimensional_gaussian", "normal_normal"]
-    sensitivities = ["adjoint", "autograd"]
+    sensitivities = ["autograd"]
     solvers = ["SynchronousLeapfrog"]
     models = ["HMC", "NNgHMC", "Explicit NNODEgHMC", "NNODEgHMC"]
     error_list = []
     for distribution in distributions:
         for sensitivity in sensitivities:
             for solver in solvers:
-                if (solver == "SynchronousLeapfrog") & (sensitivity == "adjoint"):
-                    continue
                 model_dict = {}
                 for model in models:
                     

@@ -22,13 +22,22 @@ class SynchronousLeapfrog(DiffEqSolver):
 
     def step(self, f:HNN , xv, t, dt, k1=None, args=None):
         half_state_dim = xv.shape[-1] // 2
-        q, p = xv[..., :half_state_dim], xv[..., half_state_dim:2*half_state_dim]
+        # q, p = xv[..., :half_state_dim], xv[..., half_state_dim:2*half_state_dim]
+        q, p = xv[..., :half_state_dim], xv[..., half_state_dim:]
+
+        # q , p = torch.split(xv, (half_state_dim, 2), 1)
         dH = f(t, xv)
-        dq, dp = dH[..., :half_state_dim], dH[..., half_state_dim:2*half_state_dim]
+        # dq, dp = dH[..., :half_state_dim], dH[..., half_state_dim:2*half_state_dim]
+        dq, dp = dH[..., :half_state_dim], dH[..., half_state_dim:]
+
+        # dq, dp = torch.split(xv, (half_state_dim, 2), 1)
         q_new = q + dt * p  + .5 * torch.square(dt) * dp 
 
         dH_new = f(t, torch.cat([q_new, p], -1))
-        dq_new, dp_new = dH_new[..., :half_state_dim], dH_new[..., half_state_dim:2*half_state_dim]
+        # dq_new, dp_new = dH_new[..., :half_state_dim], dH_new[..., half_state_dim:2*half_state_dim]
+        dq_new, dp_new = dH_new[..., :half_state_dim], dH_new[..., half_state_dim:]
+
+        # dq_new, dp_new = torch.split(dH_new, (half_state_dim, 2), 1)
         p_new = p  + .5 * dt * (dp + dp_new)
 
         x_sol = torch.cat([q_new, p_new], -1)

@@ -1,6 +1,7 @@
 import torch 
 import numpy as np
 import torch.nn as nn
+from typing import Union
 from torch.autograd import grad
 from torchdyn.core import NeuralODE
 
@@ -55,7 +56,7 @@ class HNNEnergyDeriv(nn.Module):
         n = self.input_dim 
         q, p = x[..., :n], x[..., n:]
         dHdq = self.potential_deriv(q)
-        return  torch.cat([p, -dHdq], - 1)
+        return  torch.cat([1*p, -dHdq], -1)
 
 class RMHNNEnergyDeriv(nn.Module):
     """
@@ -198,7 +199,9 @@ class HNNEnergyExplicit(nn.Module):
 
 
     def forward(self, x, *args, **kwargs):
-        return nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(x))))
+        n = self.input_dim
+        q, p = x[..., :n], x[..., n:]
+        return nn.Softplus()(self.layer_2(nn.Tanh()(self.layer_1(q)))) + .5 * torch.square(p).sum(axis = -1)
     
 class RMHNNEnergyExplicit(nn.Module):
     """
@@ -233,12 +236,10 @@ class HNN(nn.Module):
         self.H = Hamiltonian
     def forward(self, x, *args, **kwargs):
         n = self.H.input_dim 
-        q, p = x[..., :n], x[..., n:]
         with torch.set_grad_enabled(True):
-            
-            q = q.requires_grad_(True)
-            gradH = grad(self.H(q).sum(), q, create_graph=True)[0]
-        return torch.cat([p, -gradH], -1).to(x)
+            x = x.requires_grad_(True)
+            gradH = grad(self.H(x).sum(), x, create_graph=True)[0]
+        return torch.cat([gradH[..., n:], -1*gradH[..., :n]], -1).to(x)
     
 
 class RMHNN(nn.Module):
@@ -256,7 +257,7 @@ class RMHNN(nn.Module):
         return torch.cat([gradH[..., n:2*n], -gradH[..., :n]], -1).to(x)
 
 class HNNODE(nn.Module):
-    def __init__(self, odefunc: HNN, sensitivity="adjoint", solver="dopri5", atol=1e-3, rtol=1e-3) -> None:
+    def __init__(self, odefunc: Union[HNN,HNNEnergyDeriv], sensitivity="adjoint", solver="dopri5", atol=1e-3, rtol=1e-3) -> None:
         super(HNNODE, self).__init__()
         self.odefunc = odefunc
         self.neural_ode_layer = NeuralODE(self.odefunc, solver = solver, sensitivity=sensitivity, atol=atol, rtol=rtol)
@@ -292,7 +293,7 @@ class NNODEgRMHMC(nn.Module):
 
 
 def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
-    early_stopper = EarlyStopper(patience = 10)
+    # early_stopper = EarlyStopper(patience = 10)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate Model")
      # Compute and print loss.
@@ -304,8 +305,8 @@ def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
 
         y_pred = model(X)
         loss = loss_func(y_pred, y)
-        if early_stopper.early_stop(loss):             
-            break
+        # if early_stopper.early_stop(loss):             
+        #     break
        
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
@@ -325,7 +326,7 @@ def train(model: nn.Module, X, y, epochs = 10, lr = .01, loss_type = "l2"):
 
 
 def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2", gradient_traj = None):
-    early_stopper = EarlyStopper(patience = 10)
+    # early_stopper = EarlyStopper(patience = 10)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print("Training Surrogate ODE Model")
      # Compute and print loss.
@@ -347,8 +348,8 @@ def train_ode(model: nn.Module, X, y, t,  epochs = 10, lr = .01, loss_type = "l2
 
 
         total_loss = gradient_loss + loss
-        if early_stopper.early_stop(total_loss):             
-                break
+        # if early_stopper.early_stop(total_loss):             
+        #         break
         # Before the backward pass, use the optimizer object to zero all of the
         # gradients for the variables it will update (which are the learnable
         # weights of the model). This is because by default, gradients are
