@@ -1,4 +1,4 @@
-# hamiltorch [![Build Status](https://travis-ci.com/AdamCobb/hamiltorch.svg?token=qJKqovbtw9EzCw99Nvg8&branch=master)](https://travis-ci.com/AdamCobb/hamiltorch)
+# hamiltorch
 
 
  PyTorch-based library for Riemannian Manifold Hamiltonian Monte Carlo (RMHMC) and inference in Bayesian neural networks
