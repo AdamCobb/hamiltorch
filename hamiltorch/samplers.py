@@ -390,7 +390,7 @@ def leapfrog(params, momentum, log_prob_func, steps=10, step_size=0.1, jitter=0.
         if pass_grad is not None:
             raise RuntimeError('Passing user-determined gradients not implemented for RMHMC')
 
-        #During leapfrog define integrator as implict when passing into riemannian_hamiltonian
+        #During leapfrog define integrator as implicit when passing into riemannian_hamiltonian
         leapfrog_hamiltonian_flag = Integrator.IMPLICIT
         def hamAB_grad_params(params,momentum):
             params = params.detach().requires_grad_()
