@@ -1,0 +1,195 @@
+%%
+%% This is file `draftwatermark.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% draftwatermark.dtx  (with options: `draftwatermark')
+%% 
+%%   IMPORTANT NOTICE:
+%% 
+%% Copyright 2006, 2020
+%% Sergio Callegari <sergio.callegari@gmail.com>
+%% 
+%% ------------------------------------------------
+%% This file is part of the draftwatermark package,
+%% a contribution to the LaTeX2e system.
+%% ------------------------------------------------
+%% 
+%% This program consists of the files listed in the README.md file included
+%% in the package.
+%% 
+%% Any modified versions of this file must be renamed with new filenames
+%% distinct from draftwatermark.sty.
+%% 
+%% For distribution of the original source see the terms for copying and
+%% modification in the file draftwatermark.dtx.
+%% 
+%% This generated file may be distributed as long as the original source files,
+%% as listed above, are part of the same distribution. (The sources need not
+%% necessarily be in the same archive or directory.)
+%% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{draftwatermark}%
+  [2020/12/08 3.0 Put a gray textual watermark on document pages]
+\@ifundefined{AddToHook}{%
+  \PackageWarningNoLine{draftwatermark}{%
+    You appear to be running a version of LaTeX\MessageBreak
+    unsupported by current draftwatermark.\MessageBreak
+    Forcing fallback to `draftwatermark-2x` that\MessageBreak
+    uses an older code base}%
+  \RequirePackageWithOptions{draftwatermark-2x}%
+  \endinput}{}
+\RequirePackage{kvoptions}
+\RequirePackage{graphicx}
+\RequirePackage{color}
+\DeclareBoolOption[false]{firstpageonly}
+\define@key{draftwatermark}{firstpage}[true]{%
+  \csname draftwatermark@firstpageonly#1\endcsname}
+\DeclareBoolOption[true]{stamp}
+\DeclareComplementaryOption{nostamp}{stamp}
+\DeclareComplementaryOption{final}{stamp}
+\DeclareStringOption[45]{angle}
+\DeclareStringOption[1]{scale}
+\DeclareStringOption[DRAFT]{text}
+\DeclareStringOption[0.5\paperwidth]{hpos}
+\DeclareStringOption[0.5\paperheight]{vpos}
+\DeclareStringOption[0.25\paperwidth]{fontsize}
+\DeclareStringOption[gray]{colormodel}
+\DeclareStringOption[0.8]{colorspec}
+\DeclareStringOption[c]{hanchor}
+\DeclareStringOption[m]{vanchor}
+\DeclareStringOption[c]{alignment}
+\DeclareStringOption[\DraftwatermarkStdMark]{markcmd}
+\define@key{draftwatermark}{pos}{%
+  \draftwatermark@processpos #1\@nil}
+\define@key{draftwatermark}{anchor}{%
+  \draftwatermark@processanchor{#1}}
+\define@key{draftwatermark}{color}{%
+  \draftwatermark@processcolor #1\@nil}
+\def\draftwatermark@processpos#1,#2\@nil{%
+  \def\draftwatermark@hpos{#1}%
+  \def\draftwatermark@vpos{#2}}
+
+\def\draftwatermark@processanchor#1{%
+  \def\draftwatermark@tempa{#1}
+  \@onelevel@sanitize \draftwatermark@tempa
+  \expandafter \@tfor \expandafter \draftwatermark@tempb
+    \expandafter :\expandafter =\draftwatermark@tempa
+    \do
+    {%
+      \if \draftwatermark@tempb l%
+        \def \draftwatermark@hanchor{l}%
+      \else \if \draftwatermark@tempb c%
+        \def \draftwatermark@hanchor{c}%
+      \else \if \draftwatermark@tempb r%
+        \def \draftwatermark@hanchor{r}%
+      \else \if \draftwatermark@tempb t%
+        \def \draftwatermark@vanchor{t}%
+      \else \if \draftwatermark@tempb m%
+        \def \draftwatermark@vanchor{m}%
+      \else \if \draftwatermark@tempb b%
+        \def \draftwatermark@vanchor{b}
+      \else
+        \PackageError{draftwatermark}{%
+          Illegal anchor directive `\draftwatermark@tempb'}%
+          {Directive has been ingnored.}%
+      \fi\fi\fi\fi\fi\fi
+    }}
+
+\def\draftwatermark@processcolor{%
+  \@ifnextchar[
+    \draftwatermark@processcolor@ii\draftwatermark@processcolor@i}
+
+\def\draftwatermark@processcolor@i#1\@nil{%
+  \def\draftwatermark@colormodel{}%
+  \def\draftwatermark@colorspec{#1}}
+
+\def\draftwatermark@processcolor@ii[#1]#2\@nil{%
+  \def\draftwatermark@colormodel{#1}%
+  \def\draftwatermark@colorspec{#2}}
+
+\ProcessKeyvalOptions*
+\DisableKeyvalOption{draftwatermark}{firstpageonly}
+\DisableKeyvalOption{draftwatermark}{firstpage}
+
+\newcommand\DraftwatermarkOptions[1]{\setkeys{draftwatermark}{#1}}
+
+\newcommand\SetWatermarkAngle[1]{\DraftwatermarkOptions{angle=#1}}
+\newcommand\SetWatermarkFontSize[1]{\DraftwatermarkOptions{fontsize=#1}}
+\newcommand\SetWatermarkScale[1]{\DraftwatermarkOptions{scale=#1}}
+\newcommand\SetWatermarkHorCenter[1]{%
+  \DraftwatermarkOptions{hpos=#1, hanchor=c}}
+\newcommand\SetWatermarkVerCenter[1]{%
+  \DraftwatermarkOptions{vpos=#1, vanchor=m}}
+\newcommand\SetWatermarkText[1]{\DraftwatermarkOptions{text={#1}}}
+\newcommand\SetWatermarkColor[2][]{%
+  \DraftwatermarkOptions{colormodel=#1, colorspec=#2}}
+\newcommand\SetWatermarkLightness[1]{%
+  \DraftwatermarkOptions{colormodel=gray, colorspec=#1}}
+
+\newcommand\DraftwatermarkStdMark{%
+  \rotatebox{\draftwatermark@angle}{%
+    \scalebox{\draftwatermark@scale}{%
+      \begingroup
+      \ifx\draftwatermark@colormodel\@empty
+        \color{\draftwatermark@colorspec}%
+      \else
+        \color[\draftwatermark@colormodel]{\draftwatermark@colorspec}%
+      \fi
+      \setlength{\@tempdima}{\draftwatermark@fontsize}%
+      \fontsize{\@tempdima}{1.2\@tempdima}\selectfont
+      \shortstack[\draftwatermark@alignment]{\draftwatermark@text}%
+      \endgroup}}}
+
+\newcommand\draftwatermark@printwm[1]{%
+  \sbox\@tempboxa{\raisebox{\depth}{#1}}%
+  \setlength{\@tempdima}{\draftwatermark@hpos}%
+  \setlength{\@tempdimb}{-\draftwatermark@vpos}%
+  \edef \draftwatermark@tempa{\draftwatermark@hanchor}%
+  \@onelevel@sanitize \draftwatermark@tempa
+  \expandafter\def\expandafter\draftwatermark@tempb
+    \expandafter{\expandafter\@car \draftwatermark@tempa\@nil}%
+  \if \draftwatermark@tempb r%
+    \addtolength\@tempdima{-\wd\@tempboxa}%
+  \else\if \draftwatermark@tempb c%
+    \addtolength\@tempdima{-0.5\wd\@tempboxa}%
+  \else\if \draftwatermark@tempb l%
+    \relax
+  \else
+    \PackageError{draftwatermark}{%
+      Illegal anchor directive `\draftwatermark@tempb'}%
+        {Anchoring to left side.}%
+  \fi\fi\fi
+  \edef \draftwatermark@tempa{\draftwatermark@vanchor}%
+  \@onelevel@sanitize \draftwatermark@tempa
+  \expandafter\def\expandafter\draftwatermark@tempb
+    \expandafter{\expandafter\@car \draftwatermark@tempa\@nil}%
+  \if \draftwatermark@tempb b%
+    \relax
+  \else\if \draftwatermark@tempb m%
+    \addtolength\@tempdimb{-0.5\ht\@tempboxa}%
+  \else\if \draftwatermark@tempb t%
+    \addtolength\@tempdimb{-\ht\@tempboxa}%
+  \else
+    \PackageError{draftwatermark}{%
+      Illegal anchor directive `\draftwatermark@tempb'}%
+        {Anchoring to top side.}%
+  \fi\fi\fi
+  \put(\@tempdima,\@tempdimb){\usebox\@tempboxa}%
+}
+
+\newcommand\draftwatermark@print[1]{%
+  \ifdraftwatermark@stamp
+    \draftwatermark@printwm{#1}%
+  \fi}
+\ifdraftwatermark@firstpageonly
+  \AddToHookNext{shipout/background}{%
+    \draftwatermark@print{\draftwatermark@markcmd}}%
+\else
+  \AddToHook{shipout/background}{%
+    \draftwatermark@print{\draftwatermark@markcmd}}%
+\fi
+\endinput
+%%
+%% End of file `draftwatermark.sty'.

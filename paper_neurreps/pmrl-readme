@@ -1,0 +1,70 @@
+LaTeX Class : jmlr bundle v1.30 (2022-02-09)
+
+Author      : Nicola L. C. Talbot
+              dickimaw-books.com/contact
+
+LICENCE
+
+This material is subject to the LaTeX Project Public License. 
+See http://www.ctan.org/license/lppl1.3 
+for the details of that license.
+
+Copyright 2006-2022 Nicola Talbot
+
+DESCRIPTION
+
+This bundle provides:
+
+   * jmlr class (article authors)
+   * jmlrutils package (supplementary package automatically loaded by jmlr.cls)
+   * jmlrbook class (for production editors, now obsolete)
+
+The jmlr class was designed primarily for the Journal of
+Machine Learning Research Workshop and Conference Proceedings 
+(JMLR W&CP) based on the jmlrwcp2e package to make it easier for
+production editors to combine articles into a single book.
+
+JMLR W&CP has been renamed Proceedings of Machine Learning Research
+(PMLR). Please use class option 'pmlr' for new articles.
+
+If you want to submit an article to the Journal of Machine Learning
+Research (JMLR), please follow their guidelines instead.
+
+The jmlrutils package is automatically loaded by the jmlr class, but
+may be used with other classes. (You may need to additionally load
+graphicx and algorithm2e, which jmlr.cls does automatically.)
+
+The jmlrbook class no longer works since it relies on another class
+that has stopped working following modifications to the LaTeX kernel
+in 2020. Production editors will now need to manually set the first
+page number for each article. If a printed book is required, all
+articles can be combined using pdfpages instead.
+
+This doesn't affect article authors who can continue to use jmlr.cls.
+
+REQUIREMENTS
+
+jmlr class requirements:
+
+  jmlrutils
+  xcolor
+  amsmath
+  amssymb
+  natbib
+  graphicx
+  url
+  algorithm2e
+  etoolbox
+  calc
+  hyperref
+
+jmlrbook class requirements:
+
+  jmlr
+  combine
+  hyperref
+  xkeyval
+  combnat
+  setspace
+  currfile
+

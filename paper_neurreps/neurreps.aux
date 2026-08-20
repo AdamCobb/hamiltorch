@@ -1,0 +1,76 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\bibstyle{plainnat}
+\citation{valperga2022reversible}
+\citation{Li_2019}
+\citation{jin2020sympnets}
+\citation{greydanus2019hamiltonian,chen2019neural}
+\providecommand \oddpage@label [2]{}
+\jmlr@workshop{Symmetry and Geometry in Neural Representations}
+\jmlr@title{Time-Reversal Symmetry for Flow-Map Surrogates}{Symplectic Is Not Enough: Time-Reversal Symmetry Makes Learned Flow Maps Usable as Hamiltonian Monte Carlo Proposals}
+\newlabel{jmlrstart}{{}{1}{}{Doc-Start}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.0.1}\protected@file@percent }
+\newlabel{eq:two-structures}{{1}{1}{Introduction}{equation.0.1.1}{}}
+\citation{Brooks_2011}
+\citation{Li_2019}
+\citation{DHULIPALA2023112425}
+\citation{hoffman2011nouturn}
+\citation{hoffman2021adaptive}
+\citation{valperga2022reversible}
+\@writefile{toc}{\contentsline {paragraph}{Why one would want a learned flow map.}{2}{section*.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Contributions.}{2}{section*.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}{section.0.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Validity of a deterministic Metropolis proposal}{2}{subsection.0.2.1}\protected@file@percent }
+\citation{Green1995,Tierney1998}
+\citation{song2017nice,levy2018generalizing}
+\citation{spanbauer2020involutive}
+\citation{valperga2022reversible}
+\citation{valperga2022reversible}
+\newlabel{eq:vol}{{2}{3}{Validity of a deterministic Metropolis proposal}{equation.0.2.2}{}}
+\newlabel{eq:inv}{{3}{3}{Validity of a deterministic Metropolis proposal}{equation.0.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Symplectic networks}{3}{subsection.0.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Symmetrizing the flow map}{3}{section.0.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Closed-form inverses}{3}{subsection.0.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}The symmetrized map}{3}{subsection.0.3.2}\protected@file@percent }
+\newlabel{eq:psi}{{4}{3}{The symmetrized map}{equation.0.3.4}{}}
+\newlabel{prop:involution}{{1}{3}{The symmetrized map}{theorem.0.3.1}{}}
+\citation{HairerLubichWanner}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Pair construction for the symmetrized flow map (Gaussian target). Supervising only the queried offset is dramatically cheaper \emph  {and} fits better as $L$ grows.}}{4}{table.1}\protected@file@percent }
+\newlabel{tab:pairs}{{1}{4}{Pair construction for the symmetrized flow map (Gaussian target). Supervising only the queried offset is dramatically cheaper \emph {and} fits better as $L$ grows}{table.1}{}}
+\newlabel{lem:consistency}{{2}{4}{The symmetrized map}{theorem.0.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}What the sampler actually queries}{4}{subsection.0.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{4}{section.0.4}\protected@file@percent }
+\citation{Li_2019}
+\citation{Li_2019}
+\citation{Li_2019}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Validity conditions at random initialization ($D=2$, $L=5$, $\epsilon =0.1$, double precision). Volume preservation is $\max |{\det \nabla T}|-1$; involutivity is $\max \|(RT)^2 z - z\|_\infty $.}}{5}{table.2}\protected@file@percent }
+\newlabel{tab:validity}{{2}{5}{Validity conditions at random initialization ($D=2$, $L=5$, $\epsilon =0.1$, double precision). Volume preservation is $\max |{\det \nabla T}|-1$; involutivity is $\max \|(\flip T)^2 z - z\|_\infty $}{table.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces (a) Gaussian-process hyperparameter inference at the configuration of \citet  {Li_2019} ($n=500$, Mat\'ern $\nu =3/2$, $\epsilon =0.05$, $L=20$, $10^4$ samples); best value over training budgets. The symmetrized flow map attains $3.7\times $ the ESS/s of exact HMC, while every integrator-based surrogate is slower than exact HMC. The unsymmetrized network (hatched) posts a competitive number at a reversibility error of $5\times 10^{-4}$ and is not a valid sampler. (b) ESS/s against trajectory length. The flow map's advantage grows with $L$; the integrator-based surrogate collapses because it compounds error over $L$ steps; and training on $\mathcal  {O}(L^2)$ pairs erases the gain.}}{5}{figure.1}\protected@file@percent }
+\newlabel{fig:results}{{1}{5}{(a) Gaussian-process hyperparameter inference at the configuration of \citet {Li_2019} ($n=500$, Mat\'ern $\nu =3/2$, $\epsilon =0.05$, $L=20$, $10^4$ samples); best value over training budgets. The symmetrized flow map attains $3.7\times $ the ESS/s of exact HMC, while every integrator-based surrogate is slower than exact HMC. The unsymmetrized network (hatched) posts a competitive number at a reversibility error of $5\times 10^{-4}$ and is not a valid sampler. (b) ESS/s against trajectory length. The flow map's advantage grows with $L$; the integrator-based surrogate collapses because it compounds error over $L$ steps; and training on $\mathcal {O}(L^2)$ pairs erases the gain}{figure.1}{}}
+\@writefile{toc}{\contentsline {paragraph}{Structural validity.}{5}{section*.3}\protected@file@percent }
+\citation{Li_2019}
+\citation{hoffman2011nouturn,hoffman2021adaptive}
+\bibdata{neurreps}
+\bibcite{Brooks_2011}{{1}{2011}{{Brooks et~al.}}{{Brooks, Gelman, Jones, and Meng}}}
+\@writefile{toc}{\contentsline {paragraph}{Expensive-likelihood target.}{6}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Scaling with trajectory length.}{6}{section*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Effective sample size does not certify a surrogate.}{6}{section*.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Discussion}{6}{section.0.5}\protected@file@percent }
+\bibcite{chen2019neural}{{2}{2019}{{Chen et~al.}}{{Chen, Rubanova, Bettencourt, and Duvenaud}}}
+\bibcite{DHULIPALA2023112425}{{3}{2023}{{Dhulipala et~al.}}{{Dhulipala, Che, and Shields}}}
+\bibcite{Green1995}{{4}{1995}{{Green}}{{}}}
+\bibcite{greydanus2019hamiltonian}{{5}{2019}{{Greydanus et~al.}}{{Greydanus, Dzamba, and Yosinski}}}
+\bibcite{HairerLubichWanner}{{6}{2006}{{Hairer et~al.}}{{Hairer, Lubich, and Wanner}}}
+\bibcite{hoffman2011nouturn}{{7}{2011}{{Hoffman and Gelman}}{{}}}
+\bibcite{hoffman2021adaptive}{{8}{2021}{{Hoffman et~al.}}{{Hoffman, Radul, and Sountsov}}}
+\bibcite{jin2020sympnets}{{9}{2020}{{Jin et~al.}}{{Jin, Zhang, Zhu, Tang, and Karniadakis}}}
+\bibcite{levy2018generalizing}{{10}{2018}{{Levy et~al.}}{{Levy, Hoffman, and Sohl-Dickstein}}}
+\bibcite{Li_2019}{{11}{2019}{{Li et~al.}}{{Li, Holbrook, Shahbaba, and Baldi}}}
+\bibcite{song2017nice}{{12}{2017}{{Song et~al.}}{{Song, Zhao, and Ermon}}}
+\bibcite{spanbauer2020involutive}{{13}{2020}{{Spanbauer et~al.}}{{Spanbauer, Freer, and Mansinghka}}}
+\bibcite{Tierney1998}{{14}{1998}{{Tierney}}{{}}}
+\bibcite{valperga2022reversible}{{15}{2022}{{Valperga et~al.}}{{Valperga, Webster, Turaev, Klein, and Lamb}}}
+\newlabel{jmlrend}{{5}{8}{end of Time-Reversal Symmetry for Flow-Map Surrogates}{section*.8}{}}
+\gdef \@abspage@last{8}

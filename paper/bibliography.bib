@@ -1,0 +1,247 @@
+@article{Li_2019,
+   title={Neural network gradient Hamiltonian Monte Carlo},
+   volume={34},
+   ISSN={1613-9658},
+   url={http://dx.doi.org/10.1007/s00180-018-00861-z},
+   DOI={10.1007/s00180-018-00861-z},
+   number={1},
+   journal={Computational Statistics},
+   publisher={Springer Science and Business Media LLC},
+   author={Li, Lingge and Holbrook, Andrew and Shahbaba, Babak and Baldi, Pierre},
+   year={2019},
+   month=jan, pages={281–299} }
+
+@misc{hoffman2011nouturn,
+      title={The No-U-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo}, 
+      author={Matthew D. Hoffman and Andrew Gelman},
+      year={2011},
+      eprint={1111.4246},
+      archivePrefix={arXiv},
+      primaryClass={stat.CO}
+}
+
+@ARTICLE{8988164,
+  author={Gu, Minghao and Sun, Shiliang},
+  journal={IEEE Access}, 
+  title={Neural Langevin Dynamical Sampling}, 
+  year={2020},
+  volume={8},
+  number={},
+  pages={31595-31605},
+  keywords={Monte Carlo methods;Artificial neural networks;Markov processes;Heuristic algorithms;Magnetic resonance imaging;Correlation;Hamiltonian dynamics;Langevin dynamics;Markov chain Monte Carlo;neural networks},
+  doi={10.1109/ACCESS.2020.2972611}}
+@misc{paszke2019pytorch,
+      title={PyTorch: An Imperative Style, High-Performance Deep Learning Library}, 
+      author={Adam Paszke and Sam Gross and Francisco Massa and Adam Lerer and James Bradbury and Gregory Chanan and Trevor Killeen and Zeming Lin and Natalia Gimelshein and Luca Antiga and Alban Desmaison and Andreas Köpf and Edward Yang and Zach DeVito and Martin Raison and Alykhan Tejani and Sasank Chilamkurthy and Benoit Steiner and Lu Fang and Junjie Bai and Soumith Chintala},
+      year={2019},
+      eprint={1912.01703},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+@misc{jin2020sympnets,
+      title={SympNets: Intrinsic structure-preserving symplectic networks for identifying Hamiltonian systems}, 
+      author={Pengzhan Jin and Zhen Zhang and Aiqing Zhu and Yifa Tang and George Em Karniadakis},
+      year={2020},
+      eprint={2001.03750},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@misc{ramachandran2017searching,
+      title={Searching for Activation Functions}, 
+      author={Prajit Ramachandran and Barret Zoph and Quoc V. Le},
+      year={2017},
+      eprint={1710.05941},
+      archivePrefix={arXiv},
+      primaryClass={cs.NE}
+}
+
+@article{DHULIPALA2023112425,
+title = {Efficient Bayesian inference with latent Hamiltonian neural networks in No-U-Turn Sampling},
+journal = {Journal of Computational Physics},
+volume = {492},
+pages = {112425},
+year = {2023},
+issn = {0021-9991},
+doi = {https://doi.org/10.1016/j.jcp.2023.112425},
+url = {https://www.sciencedirect.com/science/article/pii/S002199912300520X},
+author = {Somayajulu L.N. Dhulipala and Yifeng Che and Michael D. Shields},
+keywords = {Bayesian inference, Physics-based learning, Deep neural networks, Hamiltonian Monte Carlo, Symplectic integration, Uncertainty quantification},
+abstract = {When sampling for Bayesian inference, one popular approach in the computational field is to use Hamiltonian Monte Carlo (HMC) and specifically the No-U-Turn Sampler (NUTS), which automatically decides the end time of the Hamiltonian trajectory. However, HMC and NUTS can require numerous numerical gradients of the target density, and can prove slow in practice when relying on computationally expensive forward models. We propose Latent Hamiltonian neural networks (L-HNNs) with HMC and NUTS for solving Bayesian inference problems. Once trained, L-HNNs do not require numerical gradients of the target density during sampling, and hence numerous evaluations of the forward computational model. Moreover, L-HNNs satisfy important properties such as perfect time reversibility and Hamiltonian conservation, making them well-suited for use within HMC and NUTS because stationarity can be shown. We also propose the integration of L-HNNs in an online error monitoring scheme, in which numerical gradients of the target density are used for a few samples whenever the L-HNNs prediction errors are large. This online error monitor scheme prevents sample degeneracy in regions of low probability density and ensures robust uncertainty quantification. We demonstrate L-HNNs in NUTS with online error monitoring on several analytical examples involving complex, heavy-tailed, and high-local-curvature probability densities. We then demonstrate the applicability of L-HNNs in NUTS to two computational case studies, namely the Allen-Cahn stochastic partial differential equation and an elliptic partial differential equation with 25 and 50 inference parameters, respectively. Overall, the L-HNNs in NUTS with online error monitoring satisfactorily inferred these probability densities. Compared to traditional NUTS, L-HNNs in NUTS with online error monitoring required 1–2 orders of magnitude fewer numerical gradients of the target density and improved the effective sample size (ESS) per gradient (which is a measure of both the sampling quality and the computational expense) by an order of magnitude.}
+}
+
+@incollection{10.1093/oso/9780198526155.003.0045,
+    author = {Rasmussen, Carl Edward},
+    isbn = {9780198526155},
+    title = "{Gaussian Processes to Speed up Hybrid Monte Carlo for Expensive Bayesian Integrals}",
+    booktitle = "{Bayesian Statistics 7: Proceedings of the Seventh Valencia International Meeting}",
+    publisher = {Oxford University Press},
+    year = {2003},
+    month = {07},
+    abstract = "{Hybrid Monte Carlo (HMC) is often the method of choice for computing Bayesian integrals that are not analytically tractable. However, the success of this method may require a very large number of evaluations of the (un-normalized) posterior and its partial derivatives. In situations where the posterior is computationally costly to evaluate, this may lead to an unacceptable computational load for HMC. I propose to use a Gaussian Process model of the (log of the) posterior for most of the computations required by HMC. Within this scheme only occasional evaluation of the actual posterior is required to guarantee that the samples generated have exactly the desired distribution, even if the GP model is somewhat inaccurate. The method is demonstrated on a 10 dimensional problem, where 200 evaluations suffice for the generation of 100 roughly independent points from the posterior. Thus, the proposed scheme allows Bayesian treatment of models with posteriors that are computationally demanding, such as models involving computer simulation.}",
+    doi = {10.1093/oso/9780198526155.003.0045},
+    url = {https://doi.org/10.1093/oso/9780198526155.003.0045},
+    eprint = {https://academic.oup.com/book/0/chapter/422208374/chapter-pdf/52446756/isbn-9780198526155-book-part-45.pdf},
+}
+
+
+@misc{baydin2018automatic,
+      title={Automatic differentiation in machine learning: a survey}, 
+      author={Atilim Gunes Baydin and Barak A. Pearlmutter and Alexey Andreyevich Radul and Jeffrey Mark Siskind},
+      year={2018},
+      eprint={1502.05767},
+      archivePrefix={arXiv},
+      primaryClass={cs.SC}
+}
+
+@article{Tao_2016,
+   title={Explicit symplectic approximation of nonseparable Hamiltonians: Algorithm and long time performance},
+   volume={94},
+   ISSN={2470-0053},
+   url={http://dx.doi.org/10.1103/PhysRevE.94.043303},
+   DOI={10.1103/physreve.94.043303},
+   number={4},
+   journal={Physical Review E},
+   publisher={American Physical Society (APS)},
+   author={Tao, Molei},
+   year={2016},
+   month=oct }
+
+
+@misc{poli2020torchdyn,
+      title={TorchDyn: A Neural Differential Equations Library}, 
+      author={Michael Poli and Stefano Massaroli and Atsushi Yamashita and Hajime Asama and Jinkyoo Park},
+      year={2020},
+      eprint={2009.09346},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+
+@misc{haarnoja2018soft,
+      title={Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor}, 
+      author={Tuomas Haarnoja and Aurick Zhou and Pieter Abbeel and Sergey Levine},
+      year={2018},
+      eprint={1801.01290},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@book{Brooks_2011,
+   title={Handbook of Markov Chain Monte Carlo},
+   ISBN={9780429138508},
+   url={http://dx.doi.org/10.1201/b10905},
+   DOI={10.1201/b10905},
+   publisher={Chapman and Hall/CRC},
+   author={Brooks, Steve and Gelman, Andrew and Jones, Galin and Meng, Xiao-Li},
+   year={2011},
+   month=may }
+
+@inbook{Betancourt_2013,
+   title={A General Metric for Riemannian Manifold Hamiltonian Monte Carlo},
+   ISBN={9783642400209},
+   ISSN={1611-3349},
+   url={http://dx.doi.org/10.1007/978-3-642-40020-9_35},
+   DOI={10.1007/978-3-642-40020-9_35},
+   booktitle={Geometric Science of Information},
+   publisher={Springer Berlin Heidelberg},
+   author={Betancourt, Michael},
+   year={2013},
+   pages={327–334} }
+
+@misc{greydanus2019hamiltonian,
+      title={Hamiltonian Neural Networks}, 
+      author={Sam Greydanus and Misko Dzamba and Jason Yosinski},
+      year={2019},
+      eprint={1906.01563},
+      archivePrefix={arXiv},
+      primaryClass={cs.NE}
+}
+
+@misc{chen2019neural,
+      title={Neural Ordinary Differential Equations}, 
+      author={Ricky T. Q. Chen and Yulia Rubanova and Jesse Bettencourt and David Duvenaud},
+      year={2019},
+      eprint={1806.07366},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG}
+}
+
+@book{HairerLubichWanner,
+      title={Geometric Numerical Integration: Structure-Preserving Algorithms for Ordinary Differential Equations},
+      author={Hairer, Ernst and Lubich, Christian and Wanner, Gerhard},
+      series={Springer Series in Computational Mathematics},
+      volume={31},
+      edition={2},
+      publisher={Springer},
+      year={2006}
+}
+
+@article{Green1995,
+      title={Reversible jump Markov chain Monte Carlo computation and Bayesian model determination},
+      author={Green, Peter J.},
+      journal={Biometrika},
+      volume={82},
+      number={4},
+      pages={711--732},
+      year={1995}
+}
+
+@article{Tierney1998,
+      title={A note on Metropolis-Hastings kernels for general state spaces},
+      author={Tierney, Luke},
+      journal={The Annals of Applied Probability},
+      volume={8},
+      number={1},
+      pages={1--9},
+      year={1998}
+}
+
+@misc{song2017nice,
+      title={A-NICE-MC: Adversarial Training for MCMC},
+      author={Jiaming Song and Shengjia Zhao and Stefano Ermon},
+      year={2017},
+      eprint={1706.07561},
+      archivePrefix={arXiv},
+      primaryClass={stat.ML}
+}
+
+@misc{levy2018generalizing,
+      title={Generalizing Hamiltonian Monte Carlo with Neural Networks},
+      author={Daniel Levy and Matthew D. Hoffman and Jascha Sohl-Dickstein},
+      year={2018},
+      eprint={1711.09268},
+      archivePrefix={arXiv},
+      primaryClass={stat.ML}
+}
+
+
+@inproceedings{valperga2022reversible,
+      title={Learning Reversible Symplectic Dynamics},
+      author={Valperga, Riccardo and Webster, Kevin and Turaev, Dmitry and Klein, Victoria and Lamb, Jeroen},
+      booktitle={Proceedings of The 4th Annual Learning for Dynamics and Control Conference},
+      series={Proceedings of Machine Learning Research},
+      volume={168},
+      pages={906--916},
+      year={2022},
+      publisher={PMLR}
+}
+
+@misc{spanbauer2020involutive,
+      title={Deep Involutive Generative Models for Neural MCMC},
+      author={Span Spanbauer and Cameron Freer and Vikash Mansinghka},
+      year={2020},
+      eprint={2006.15167},
+      archivePrefix={arXiv},
+      primaryClass={stat.ML}
+}
+
+@inproceedings{hoffman2021adaptive,
+      title={An Adaptive-MCMC Scheme for Setting Trajectory Lengths in Hamiltonian Monte Carlo},
+      author={Hoffman, Matthew D. and Radul, Alexey and Sountsov, Pavel},
+      booktitle={Proceedings of the 24th International Conference on Artificial Intelligence and Statistics},
+      series={Proceedings of Machine Learning Research},
+      volume={130},
+      year={2021},
+      publisher={PMLR}
+}

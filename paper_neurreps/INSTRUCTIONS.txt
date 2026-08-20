@@ -1,0 +1,14 @@
+Recommendations:
+
+1) Select the Submission Track in pmlr-sample.tex.
+At the first line of the file choose:
+- \documentclass[mlmain,onecolumn]{jmlr}, if you are submitting to the full, archival proceedings track;
+- \documentclass[mlabstract,onecolumn]{jmlr}, if you are submitting to the non-archival, extended abstract track
+
+2) Please, use the packages automatically loaded (amsmath, amssymb, natbib, graphicx, url, algorithm2e) to manage references, write equations, and include figures and algorithms. The use of different packages could create problems in the generation of the camera-ready version. Please, follow the example provided in prml-sample.tex
+
+3) References must be included in a .bib file.
+
+4) Please, write your paper in a single .tex file.
+
+5) The manuscript, data and code must be anonymized during the review process.

@@ -1,0 +1,151 @@
+\begin{thebibliography}{21}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Baydin et~al.(2018)Baydin, Pearlmutter, Radul, and
+  Siskind]{baydin2018automatic}
+Baydin, A.~G., Pearlmutter, B.~A., Radul, A.~A., and Siskind, J.~M.
+\newblock Automatic differentiation in machine learning: a survey, 2018.
+
+\bibitem[Betancourt(2013)]{Betancourt_2013}
+Betancourt, M.
+\newblock \emph{A General Metric for Riemannian Manifold Hamiltonian Monte
+  Carlo}, pp.\  327–334.
+\newblock Springer Berlin Heidelberg, 2013.
+\newblock ISBN 9783642400209.
+\newblock \doi{10.1007/978-3-642-40020-9_35}.
+\newblock URL \url{http://dx.doi.org/10.1007/978-3-642-40020-9_35}.
+
+\bibitem[Brooks et~al.(2011)Brooks, Gelman, Jones, and Meng]{Brooks_2011}
+Brooks, S., Gelman, A., Jones, G., and Meng, X.-L.
+\newblock \emph{Handbook of Markov Chain Monte Carlo}.
+\newblock Chapman and Hall/CRC, May 2011.
+\newblock ISBN 9780429138508.
+\newblock \doi{10.1201/b10905}.
+\newblock URL \url{http://dx.doi.org/10.1201/b10905}.
+
+\bibitem[Chen et~al.(2019)Chen, Rubanova, Bettencourt, and
+  Duvenaud]{chen2019neural}
+Chen, R. T.~Q., Rubanova, Y., Bettencourt, J., and Duvenaud, D.
+\newblock Neural ordinary differential equations, 2019.
+
+\bibitem[Dhulipala et~al.(2023)Dhulipala, Che, and
+  Shields]{DHULIPALA2023112425}
+Dhulipala, S.~L., Che, Y., and Shields, M.~D.
+\newblock Efficient bayesian inference with latent hamiltonian neural networks
+  in no-u-turn sampling.
+\newblock \emph{Journal of Computational Physics}, 492:\penalty0 112425, 2023.
+\newblock ISSN 0021-9991.
+\newblock \doi{https://doi.org/10.1016/j.jcp.2023.112425}.
+\newblock URL
+  \url{https://www.sciencedirect.com/science/article/pii/S002199912300520X}.
+
+\bibitem[Green(1995)]{Green1995}
+Green, P.~J.
+\newblock Reversible jump markov chain monte carlo computation and bayesian
+  model determination.
+\newblock \emph{Biometrika}, 82\penalty0 (4):\penalty0 711--732, 1995.
+
+\bibitem[Greydanus et~al.(2019)Greydanus, Dzamba, and
+  Yosinski]{greydanus2019hamiltonian}
+Greydanus, S., Dzamba, M., and Yosinski, J.
+\newblock Hamiltonian neural networks, 2019.
+
+\bibitem[Hairer et~al.(2006)Hairer, Lubich, and Wanner]{HairerLubichWanner}
+Hairer, E., Lubich, C., and Wanner, G.
+\newblock \emph{Geometric Numerical Integration: Structure-Preserving
+  Algorithms for Ordinary Differential Equations}, volume~31 of \emph{Springer
+  Series in Computational Mathematics}.
+\newblock Springer, 2 edition, 2006.
+
+\bibitem[Hoffman \& Gelman(2011)Hoffman and Gelman]{hoffman2011nouturn}
+Hoffman, M.~D. and Gelman, A.
+\newblock The no-u-turn sampler: Adaptively setting path lengths in hamiltonian
+  monte carlo, 2011.
+
+\bibitem[Jin et~al.(2020)Jin, Zhang, Zhu, Tang, and
+  Karniadakis]{jin2020sympnets}
+Jin, P., Zhang, Z., Zhu, A., Tang, Y., and Karniadakis, G.~E.
+\newblock Sympnets: Intrinsic structure-preserving symplectic networks for
+  identifying hamiltonian systems, 2020.
+
+\bibitem[Levy et~al.(2018)Levy, Hoffman, and
+  Sohl-Dickstein]{levy2018generalizing}
+Levy, D., Hoffman, M.~D., and Sohl-Dickstein, J.
+\newblock Generalizing hamiltonian monte carlo with neural networks, 2018.
+
+\bibitem[Li et~al.(2019)Li, Holbrook, Shahbaba, and Baldi]{Li_2019}
+Li, L., Holbrook, A., Shahbaba, B., and Baldi, P.
+\newblock Neural network gradient hamiltonian monte carlo.
+\newblock \emph{Computational Statistics}, 34\penalty0 (1):\penalty0 281–299,
+  January 2019.
+\newblock ISSN 1613-9658.
+\newblock \doi{10.1007/s00180-018-00861-z}.
+\newblock URL \url{http://dx.doi.org/10.1007/s00180-018-00861-z}.
+
+\bibitem[Paszke et~al.(2019)Paszke, Gross, Massa, Lerer, Bradbury, Chanan,
+  Killeen, Lin, Gimelshein, Antiga, Desmaison, Köpf, Yang, DeVito, Raison,
+  Tejani, Chilamkurthy, Steiner, Fang, Bai, and Chintala]{paszke2019pytorch}
+Paszke, A., Gross, S., Massa, F., Lerer, A., Bradbury, J., Chanan, G., Killeen,
+  T., Lin, Z., Gimelshein, N., Antiga, L., Desmaison, A., Köpf, A., Yang, E.,
+  DeVito, Z., Raison, M., Tejani, A., Chilamkurthy, S., Steiner, B., Fang, L.,
+  Bai, J., and Chintala, S.
+\newblock Pytorch: An imperative style, high-performance deep learning library,
+  2019.
+
+\bibitem[Poli et~al.(2020)Poli, Massaroli, Yamashita, Asama, and
+  Park]{poli2020torchdyn}
+Poli, M., Massaroli, S., Yamashita, A., Asama, H., and Park, J.
+\newblock Torchdyn: A neural differential equations library, 2020.
+
+\bibitem[Ramachandran et~al.(2017)Ramachandran, Zoph, and
+  Le]{ramachandran2017searching}
+Ramachandran, P., Zoph, B., and Le, Q.~V.
+\newblock Searching for activation functions, 2017.
+
+\bibitem[Rasmussen(2003)]{10.1093/oso/9780198526155.003.0045}
+Rasmussen, C.~E.
+\newblock {Gaussian Processes to Speed up Hybrid Monte Carlo for Expensive
+  Bayesian Integrals}.
+\newblock In \emph{{Bayesian Statistics 7: Proceedings of the Seventh Valencia
+  International Meeting}}. Oxford University Press, 07 2003.
+\newblock ISBN 9780198526155.
+\newblock \doi{10.1093/oso/9780198526155.003.0045}.
+\newblock URL \url{https://doi.org/10.1093/oso/9780198526155.003.0045}.
+
+\bibitem[Song et~al.(2017)Song, Zhao, and Ermon]{song2017nice}
+Song, J., Zhao, S., and Ermon, S.
+\newblock A-nice-mc: Adversarial training for mcmc, 2017.
+
+\bibitem[Spanbauer et~al.(2020)Spanbauer, Freer, and
+  Mansinghka]{spanbauer2020involutive}
+Spanbauer, S., Freer, C., and Mansinghka, V.
+\newblock Deep involutive generative models for neural mcmc, 2020.
+
+\bibitem[Tao(2016)]{Tao_2016}
+Tao, M.
+\newblock Explicit symplectic approximation of nonseparable hamiltonians:
+  Algorithm and long time performance.
+\newblock \emph{Physical Review E}, 94\penalty0 (4), October 2016.
+\newblock ISSN 2470-0053.
+\newblock \doi{10.1103/physreve.94.043303}.
+\newblock URL \url{http://dx.doi.org/10.1103/PhysRevE.94.043303}.
+
+\bibitem[Tierney(1998)]{Tierney1998}
+Tierney, L.
+\newblock A note on metropolis-hastings kernels for general state spaces.
+\newblock \emph{The Annals of Applied Probability}, 8\penalty0 (1):\penalty0
+  1--9, 1998.
+
+\bibitem[Valperga et~al.(2022)Valperga, Webster, Turaev, Klein, and
+  Lamb]{valperga2022reversible}
+Valperga, R., Webster, K., Turaev, D., Klein, V., and Lamb, J.
+\newblock Learning reversible symplectic dynamics.
+\newblock In \emph{Proceedings of The 4th Annual Learning for Dynamics and
+  Control Conference}, volume 168 of \emph{Proceedings of Machine Learning
+  Research}, pp.\  906--916. PMLR, 2022.
+
+\end{thebibliography}

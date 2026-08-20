@@ -1,0 +1,91 @@
+distribution,model,step_size,hamiltonian_error_clean
+gaussian,Explicit NNODEgHMC,0.3,0.002586854
+gaussian,Explicit NNODEgHMC,0.3,0.093074513
+gaussian,Explicit NNODEgHMC,0.3,0.354733528
+gaussian,Explicit NNODEgHMC,0.3,0.7446197979999999
+gaussian,Explicit NNODEgHMC,0.3,1.1683344599999999
+gaussian,GSymplecticNNgHMC,0.3,0.002586854
+gaussian,GSymplecticNNgHMC,0.3,0.007698200999999999
+gaussian,GSymplecticNNgHMC,0.3,0.036015797
+gaussian,GSymplecticNNgHMC,0.3,0.058630158
+gaussian,GSymplecticNNgHMC,0.3,0.037288054
+gaussian,HMC,0.3,0.038944613
+gaussian,HMC,0.3,0.107151667
+gaussian,HMC,0.3,0.114796572
+gaussian,HMC,0.3,0.06167360999999999
+gaussian,HMC,0.3,0.018762760000000003
+gaussian,NNODEgHMC,0.3,0.002586854
+gaussian,NNODEgHMC,0.3,0.06545676
+gaussian,NNODEgHMC,0.3,0.143068519
+gaussian,NNODEgHMC,0.3,0.10864164400000001
+gaussian,NNODEgHMC,0.3,0.039137284
+gaussian,NNgHMC,0.3,0.038951508
+gaussian,NNgHMC,0.3,0.10767247799999999
+gaussian,NNgHMC,0.3,0.11799828900000002
+gaussian,NNgHMC,0.3,0.067523141
+gaussian,NNgHMC,0.3,0.020725958000000003
+gaussian,SymplecticNNgHMC,0.3,0.002586854
+gaussian,SymplecticNNgHMC,0.3,0.14512568099999998
+gaussian,SymplecticNNgHMC,0.3,0.21669478099999995
+gaussian,SymplecticNNgHMC,0.3,0.19281990200000002
+gaussian,SymplecticNNgHMC,0.3,0.195910176
+high_dimensional_gaussian,Explicit NNODEgHMC,0.1,0.000735035
+high_dimensional_gaussian,Explicit NNODEgHMC,0.1,0.006710697
+high_dimensional_gaussian,Explicit NNODEgHMC,0.1,0.024782945
+high_dimensional_gaussian,Explicit NNODEgHMC,0.1,0.056570735000000004
+high_dimensional_gaussian,Explicit NNODEgHMC,0.1,0.09912673800000002
+high_dimensional_gaussian,GSymplecticNNgHMC,0.1,0.000735035
+high_dimensional_gaussian,GSymplecticNNgHMC,0.1,0.0033035350000000007
+high_dimensional_gaussian,GSymplecticNNgHMC,0.1,0.003301164
+high_dimensional_gaussian,GSymplecticNNgHMC,0.1,0.0039778470000000005
+high_dimensional_gaussian,GSymplecticNNgHMC,0.1,0.0054287269999999995
+high_dimensional_gaussian,HMC,0.1,0.0010426589999999998
+high_dimensional_gaussian,HMC,0.1,0.001905478
+high_dimensional_gaussian,HMC,0.1,0.0024967339999999996
+high_dimensional_gaussian,HMC,0.1,0.0033769009999999994
+high_dimensional_gaussian,HMC,0.1,0.0032682260000000004
+high_dimensional_gaussian,NNODEgHMC,0.1,0.000735035
+high_dimensional_gaussian,NNODEgHMC,0.1,0.0014880619999999998
+high_dimensional_gaussian,NNODEgHMC,0.1,0.0024453030000000002
+high_dimensional_gaussian,NNODEgHMC,0.1,0.004059071
+high_dimensional_gaussian,NNODEgHMC,0.1,0.004577202
+high_dimensional_gaussian,NNgHMC,0.1,0.001066211
+high_dimensional_gaussian,NNgHMC,0.1,0.0020708490000000005
+high_dimensional_gaussian,NNgHMC,0.1,0.00284374
+high_dimensional_gaussian,NNgHMC,0.1,0.004012521
+high_dimensional_gaussian,NNgHMC,0.1,0.004015453
+high_dimensional_gaussian,SymplecticNNgHMC,0.1,0.000735035
+high_dimensional_gaussian,SymplecticNNgHMC,0.1,0.003600134
+high_dimensional_gaussian,SymplecticNNgHMC,0.1,0.006658079
+high_dimensional_gaussian,SymplecticNNgHMC,0.1,0.010805942
+high_dimensional_gaussian,SymplecticNNgHMC,0.1,0.013076323
+normal_normal,Explicit NNODEgHMC,0.1,0.076436056
+normal_normal,Explicit NNODEgHMC,0.1,0.091205753
+normal_normal,Explicit NNODEgHMC,0.1,0.276419787
+normal_normal,Explicit NNODEgHMC,0.1,0.362997911
+normal_normal,Explicit NNODEgHMC,0.1,0.7836219879999999
+normal_normal,GSymplecticNNgHMC,0.1,0.076436056
+normal_normal,GSymplecticNNgHMC,0.1,0.08805315999999999
+normal_normal,GSymplecticNNgHMC,0.1,0.23096640299999996
+normal_normal,GSymplecticNNgHMC,0.1,0.228476255
+normal_normal,GSymplecticNNgHMC,0.1,0.413652586
+normal_normal,HMC,0.1,0.07860151099999999
+normal_normal,HMC,0.1,0.08683869300000001
+normal_normal,HMC,0.1,0.120591785
+normal_normal,HMC,0.1,0.15186591600000002
+normal_normal,HMC,0.1,0.15402050399999995
+normal_normal,NNODEgHMC,0.1,0.076436056
+normal_normal,NNODEgHMC,0.1,0.089325933
+normal_normal,NNODEgHMC,0.1,0.236379478
+normal_normal,NNODEgHMC,0.1,0.21729009400000004
+normal_normal,NNODEgHMC,0.1,0.37949513199999996
+normal_normal,NNgHMC,0.1,0.082163699
+normal_normal,NNgHMC,0.1,0.127637624
+normal_normal,NNgHMC,0.1,0.273112436
+normal_normal,NNgHMC,0.1,0.22377875300000002
+normal_normal,NNgHMC,0.1,0.376598648
+normal_normal,SymplecticNNgHMC,0.1,0.076436056
+normal_normal,SymplecticNNgHMC,0.1,0.08191155
+normal_normal,SymplecticNNgHMC,0.1,0.21656311700000003
+normal_normal,SymplecticNNgHMC,0.1,0.232899405
+normal_normal,SymplecticNNgHMC,0.1,0.464165351

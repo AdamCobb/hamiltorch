@@ -1,0 +1,764 @@
+\ProvidesPackage{physics}
+% physics 1.3
+% This material is subject to the LaTeX Project Public License.
+% See http://www.ctan.org/tex-archive/help/Catalogue/licenses.lppl.html for the details of that license.
+%
+% Handy commands for physicists including macros for vectors, calculus, matrices, and bra-ket (Dirac) notation
+% Requires xparse package, which comes bundled with l3packages and l3kernel
+% This package loads amsmath, which comes standard with most latex distributions
+% The commands defined in this package will silently overwrite previous commands with the same name, if such commands exist
+%
+% Created by Sergio C. de la Barrera
+% Updated on December 12, 2012
+% Uploaded on December 20, 2012
+
+\RequirePackage{xparse}
+\RequirePackage{amsmath}
+
+% Options
+\DeclareOption{trig}{\let\trigopt = 1}
+\DeclareOption{notrig}{\let\trigopt = 0}
+\DeclareOption{uprightdiff}{\def\diffd{\mathrm{d}}} % Upright differentials
+\DeclareOption{italicdiff}{\def\diffd{d}} % Italic differentials
+\DeclareOption{bolddel}{\DeclareDocumentCommand\vnabla{}{\boldsymbol\nabla}} % Vector bold \nabla symbol
+\DeclareOption{arrowdel}{\DeclareDocumentCommand\vnabla{}{\vec{\boldsymbol\nabla}}} % Vector arrow \nabla symbol
+\ExecuteOptions{trig,uprightdiff,bolddel}
+\ProcessOptions\relax
+
+% Symbols
+\ProvideDocumentCommand\varE{}{\mathcal{E}} % Curly 'E'
+\ProvideDocumentCommand\ordersymbol{}{\mathcal{O}} % Order symbol --> O(x^2)
+\ProvideDocumentCommand\lparen{}{(} % Left parenthesis
+\ProvideDocumentCommand\rparen{}{)} % Right parenthesis
+
+% Brackets and braces
+\DeclareDocumentCommand\quantity{}{{\ifnum\z@=`}\fi\@quantity}
+\DeclareDocumentCommand\@quantity{ t\big t\Big t\bigg t\Bigg g o d() d|| }
+{ % Flexible automatic bracketing of an expression in () or [] or {} or ||
+	% Handles manual override of sizing
+	\IfBooleanTF{#1}{\let\ltag\bigl \let\rtag\bigr}{
+		\IfBooleanTF{#2}{\let\ltag\Bigl \let\rtag\Bigr}{
+			\IfBooleanTF{#3}{\let\ltag\biggl \let\rtag\biggr}{
+				\IfBooleanTF{#4}
+				{\let\ltag\Biggl \let\rtag\Biggr}
+				{\let\ltag\left \let\rtag\right}
+			}
+		}
+	}
+	% Handles actual bracketing
+	\IfNoValueTF{#5}{
+		\IfNoValueTF{#6}{
+			\IfNoValueTF{#7}{
+				\IfNoValueTF{#8}
+				{()}
+				{\ltag\lvert{#8}\rtag\rvert}
+			}
+			{\ltag(#7\rtag) \IfNoValueTF{#8}{}{|#8|}}
+		}
+		{\ltag[#6\rtag] \IfNoValueTF{#7}{}{(#7)} \IfNoValueTF{#8}{}{|#8|}}
+	}
+	{\ltag\lbrace#5\rtag\rbrace  \IfNoValueTF{#6}{}{[#6]} \IfNoValueTF{#7}{}{(#7)} \IfNoValueTF{#8}{}{|#8|}}
+	\ifnum\z@=`{\fi}
+}
+\DeclareDocumentCommand\qty{}{\quantity} % Shorthand for \quantity
+\DeclareDocumentCommand\pqty{ l m }{\braces#1{\lparen}{\rparen}{#2}}
+\DeclareDocumentCommand\bqty{ l m }{\braces#1{\lbrack}{\rbrack}{#2}}
+\DeclareDocumentCommand\Bqty{ l m }{\braces#1{\lbrace}{\rbrace}{#2}}
+\DeclareDocumentCommand\vqty{ l m }{\braces#1{\lvert}{\rvert}{#2}}
+
+
+\DeclareDocumentCommand\pmqty{m}{\begin{pmatrix}#1\end{pmatrix}}
+\DeclareDocumentCommand\Pmqty{m}{\left\lgroup\begin{matrix}#1\end{matrix}\right\rgroup}
+\DeclareDocumentCommand\bmqty{m}{\begin{bmatrix}#1\end{bmatrix}}
+\DeclareDocumentCommand\vmqty{m}{\begin{vmatrix}#1\end{vmatrix}}
+\DeclareDocumentCommand\matrixquantity{}{{\ifnum\z@=`}\fi\@matrixquantity}
+\DeclareDocumentCommand\@matrixquantity{ s g o d() d|| }
+{
+	\mathord{
+	\IfNoValueTF{#2}
+	{
+		\IfNoValueTF{#3}
+		{
+			\IfNoValueTF{#4}
+			{
+				\IfNoValueTF{#5}
+				{()}
+				{\vmqty{#5}}
+			}
+			{
+				\IfBooleanTF{#1}
+				{\Pmqty{#4}}
+				{\pmqty{#4}}
+				\IfNoValueTF{#5}{}{|#5|}
+			}
+		}
+		{\bmqty{#3} \IfNoValueTF{#4}{}{(#4)} \IfNoValueTF{#5}{}{|#5|}}
+	}
+	{\begin{matrix}#2\end{matrix} \IfNoValueTF{#3}{}{[#3]} \IfNoValueTF{#4}{}{(#4)} \IfNoValueTF{#5}{}{|#5|}}
+	}
+	\ifnum\z@=`{\fi}
+}
+\DeclareDocumentCommand\mqty{}{\matrixquantity} % Shorthand for \matrixquantity
+\DeclareDocumentCommand\matrixdeterminant{m}{\vmqty{#1}} % Matrix determinant
+\DeclareDocumentCommand\mdet{}{\matrixdeterminant} % Shorthand for matrix determinant
+
+\DeclareDocumentCommand\spmqty{m}{\pqty{\begin{smallmatrix}#1\end{smallmatrix}}}
+\DeclareDocumentCommand\sPmqty{m}{\left\lgroup\begin{smallmatrix}#1\end{smallmatrix}\right\rgroup}
+\DeclareDocumentCommand\sbmqty{m}{\bqty{\begin{smallmatrix}#1\end{smallmatrix}}}
+\DeclareDocumentCommand\svmqty{m}{\vqty{\begin{smallmatrix}#1\end{smallmatrix}}}
+\DeclareDocumentCommand\smallmatrixquantity{ s g o d() d|| }
+{
+	\mathord{
+	\IfNoValueTF{#2}
+	{
+		\IfNoValueTF{#3}
+		{
+			\IfNoValueTF{#4}
+			{
+				\IfNoValueTF{#5}
+				{()}
+				{\svmqty{#5}}
+			}
+			{
+				\IfBooleanTF{#1}
+				{\sPmqty{#4}}
+				{\spmqty{#4}}
+				\IfNoValueTF{#5}{}{|#5|}
+			}
+		}
+		{\sbmqty{#3} \IfNoValueTF{#4}{}{(#4)} \IfNoValueTF{#5}{}{|#5|}}
+	}
+	{\begin{smallmatrix}#2\end{smallmatrix} \IfNoValueTF{#3}{}{[#3]} \IfNoValueTF{#4}{}{(#4)} \IfNoValueTF{#5}{}{|#5|}}
+	}
+}
+\DeclareDocumentCommand\smqty{}{\smallmatrixquantity} % Shorthand for \smallmatrixquantity
+\DeclareDocumentCommand\smallmatrixdeterminant{m}{\svmqty{#1}} % Small matrix determinant
+\DeclareDocumentCommand\smdet{}{\smallmatrixdeterminant} % Shorthand for small matrix determinant
+
+\DeclareDocumentCommand\argopen{s}{\IfBooleanTF{#1}{\mathopen{}\mathclose\bgroup}{\mathopen{}\mathclose\bgroup\left}} % Special open grouping for argument of a function
+\DeclareDocumentCommand\argclose{s}{\IfBooleanTF{#1}{\egroup}{\aftergroup\egroup\right}} % Special close grouping for argument of a function
+
+\DeclareDocumentCommand\braces{}{{\ifnum\z@=`}\fi\@braces}
+\DeclareDocumentCommand\@braces{ s t\big t\Big t\bigg t\Bigg m m m }
+{ % General braces with automatic and manual sizing
+	\IfBooleanTF{#1}
+	{\left#6\smash{#8}\right#7\vphantom{#8}}
+	{
+		\IfBooleanTF{#2}{\bigl#6{#8}\bigr#7}{
+			\IfBooleanTF{#3}{\Bigl#6{#8}\Bigr#7}{
+				\IfBooleanTF{#4}{\biggl#6{#8}\biggr#7}{
+					\IfBooleanTF{#5}{\Biggl#6{#8}\Biggr#7}{\left#6{#8}\right#7}
+				}
+			}
+		}
+	}
+	\ifnum\z@=`{\fi}
+}
+
+\DeclareDocumentCommand\fbraces{ s t\big t\Big t\bigg t\Bigg m m m m }
+{ % Function braces with automatic and manual sizing
+	#8
+	\IfBooleanTF{#1}
+	{\argopen#6\smash{#9}\argclose#7\vphantom{#9}}
+	{
+		\IfBooleanTF{#2}{\argopen*\bigl#6{#9}\argclose*\bigr#7}{
+			\IfBooleanTF{#3}{\argopen*\Bigl#6{#9}\argclose*\Bigr#7}{
+				\IfBooleanTF{#4}{\argopen*\biggl#6{#9}\argclose*\biggr#7}{
+					\IfBooleanTF{#5}
+					{\argopen*\Biggl#6{#9}\argclose*\Biggr#7}
+					{\argopen#6{#9}\argclose#7}
+				}
+			}
+		}
+	}
+}
+
+\DeclareDocumentCommand\absolutevalue{ l m }{\braces#1{\lvert}{\rvert}{#2}} % Absolute value/complex modulus
+\DeclareDocumentCommand\abs{}{\absolutevalue} % Shorthand for \absolutevalue
+\DeclareDocumentCommand\norm{ l m }{\braces#1{\lVert}{\rVert}{#2}} % Norm
+\DeclareDocumentCommand\order{ l m }{\fbraces#1{\lparen}{\rparen}{\ordersymbol}{#2}} % Order notation -> O(x^2)
+
+\DeclareDocumentCommand\evaluated{ s g d[| d(| }
+{ % Vertical evaluation bar
+	\IfNoValueTF{#2}
+	{
+		\IfNoValueTF{#3}
+		{
+			\IfNoValueTF{#4}
+				{\argopen.\vphantom{\int}\argclose\rvert}
+				{\IfBooleanTF{#1}{\vphantom{#4}}{}\left(\IfBooleanTF{#1}{\smash{#4}}{#4}\vphantom{\int}\right\rvert}
+		}
+		{\IfBooleanTF{#1}{\vphantom{#3}}{}\left[\IfBooleanTF{#1}{\smash{#3}}{#3}\vphantom{\int}\right\rvert \IfNoValueTF{#4}{}{(#4|}}
+	}
+	{\IfBooleanTF{#1}{\vphantom{#2}}{}\left.\IfBooleanTF{#1}{\smash{#2}}{#2}\vphantom{\int}\right\rvert \IfNoValueTF{#3}{}{[#3|} \IfNoValueTF{#4}{}{(#4|}}
+}
+\DeclareDocumentCommand\eval{}{\evaluated} % Shorthand for evaluated
+
+\DeclareDocumentCommand\poissonbracket{ l m m }{\braces#1{\lbrace}{\rbrace}{#2,#3}} % Poisson bracket [same as anti-commutator]
+\DeclareDocumentCommand\pb{}{\poissonbracket} % Shorthand for \poissonbracket
+
+% Commutators
+\DeclareDocumentCommand\commutator{ l m m }{\braces#1{\lbrack}{\rbrack}{#2,#3}} % Commutator
+\DeclareDocumentCommand\comm{}{\commutator} % Shorthand for \commutator
+\DeclareDocumentCommand\anticommutator{ l m m }{\braces#1{\lbrace}{\rbrace}{#2,#3}} % Anticommutator [same as Poisson bracket]
+\DeclareDocumentCommand\acommutator{}{\anticommutator} % Shorthand for \anticommutator
+\DeclareDocumentCommand\acomm{}{\anticommutator} % Shorthand for \anticommutator
+
+% Vector notation
+\DeclareDocumentCommand\vectorbold{ s m }{\IfBooleanTF{#1}{\boldsymbol{#2}}{\mathbf{#2}}} % Vector bold [star for Greek and italic Roman]
+\DeclareDocumentCommand\vb{}{\vectorbold} % Shorthand for \vectorbold
+
+\DeclareDocumentCommand\vectorarrow{ s m }{\IfBooleanTF{#1}{\vec{\boldsymbol{#2}}}{\vec{\mathbf{#2}}}} % Vector arrow + bold [star for Greek and italic Roman]
+\DeclareDocumentCommand\va{}{\vectorarrow} % Shorthand for \vectorarrow
+
+\DeclareDocumentCommand\vectorunit{ s m }{\IfBooleanTF{#1}{\boldsymbol{\hat{#2}}}{\mathbf{\hat{#2}}}} % Unit vector [star for Greek and italic Roman]
+\DeclareDocumentCommand\vu{}{\vectorunit} % Shorthand for \vectorunit
+
+\DeclareDocumentCommand\dotproduct{}{\boldsymbol\cdot} % Vector dot product symbol
+\DeclareDocumentCommand\vdot{}{\dotproduct} % Shorthand for \dotproduct [note that the command sequence \dp is protected]
+
+\DeclareDocumentCommand\crossproduct{}{\boldsymbol\times} % Vector cross product symbol
+\DeclareDocumentCommand\cross{}{\crossproduct} % Shorthand for \crossproduct
+\DeclareDocumentCommand\cp{}{\crossproduct} % Shorthand for \crossproduct
+
+\DeclareDocumentCommand\gradient{ g o d() }{ % Gradient
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{\vnabla}{\fbraces{\lparen}{\rparen}{\vnabla}{#3}}
+			}
+			{\fbraces{\lbrack}{\rbrack}{\vnabla}{#2} \IfNoValueTF{#3}{}{(#3)}}
+		}
+		{\vnabla #1 \IfNoValueTF{#2}{}{[#2]} \IfNoValueTF{#3}{}{(#3)}}
+	}
+\DeclareDocumentCommand\grad{}{\gradient} % Shorthand for \gradient
+
+\DeclareDocumentCommand\divergence{ g o d() }{ % Divergence
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{\vnabla \vdot}{\vnabla \vdot \quantity(#3)}
+			}
+			{\vnabla \vdot \quantity[#2] \IfNoValueTF{#3}{}{(#3)}}
+		}
+		{\vnabla \vdot #1 \IfNoValueTF{#2}{}{[#2]} \IfNoValueTF{#3}{}{(#3)}}
+	}
+\let\divisionsymbol\div % Rename \div [division symbol] in order to free up control sequence for \divergence
+\let\div\relax
+\DeclareDocumentCommand\div{}{\divergence} % Shorthand for \divergence
+
+\DeclareDocumentCommand\curl{ g o d() }{ % Curl
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{\vnabla \cross}{\vnabla \cross \quantity(#3)}
+			}
+			{\vnabla \cross \quantity[#2] \IfNoValueTF{#3}{}{(#3)}}
+		}
+		{\vnabla \cross #1 \IfNoValueTF{#2}{}{[#2]} \IfNoValueTF{#3}{}{(#3)}}
+	}
+
+\DeclareDocumentCommand\laplacian{ g o d() }{ % Laplacian
+	\IfNoValueTF{#1}{
+		\IfNoValueTF{#2}{
+			\IfNoValueTF{#3}{\nabla^2}{\fbraces{\lparen}{\rparen}{\nabla^2}{#3}}
+			}
+			{\fbraces{\lbrack}{\rbrack}{\nabla^2}{#2} \IfNoValueTF{#3}{}{(#3)}}
+		}
+		{\nabla^2 #1 \IfNoValueTF{#2}{}{[#2]} \IfNoValueTF{#3}{}{(#3)}}
+	}
+
+% Operators
+\DeclareMathOperator{\trace}{tr} % Trace of a matrix
+\DeclareMathOperator{\Trace}{Tr} % Trace of a matrix (alternate)
+\DeclareMathOperator{\rank}{rank} % Rank of a matrix
+\DeclareMathOperator{\erf}{erf} % Gauss error function
+\DeclareMathOperator{\Residue}{Res} % Residue
+\DeclareDocumentCommand\principalvalue{g}{\IfNoValueTF{#1}{\mathcal{P}}{\mathcal{P}\mathord{#1}}}
+\DeclareDocumentCommand\pv{}{\principalvalue}
+\DeclareDocumentCommand\PV{g}{\IfNoValueTF{#1}{\mathrm{P.V.}}{\mathrm{P.V.}\mathord{#1}}}
+\let\real\Re \DeclareDocumentCommand\Re{g}{\IfNoValueTF{#1}{\operatorname{Re}}{\fbraces{\lbrace}{\rbrace}{\operatorname{Re}}{#1}}}
+\let\imaginary\Im \DeclareDocumentCommand\Im{g}{\IfNoValueTF{#1}{\operatorname{Im}}{\fbraces{\lbrace}{\rbrace}{\operatorname{Im}}{#1}}}
+\DeclareDocumentCommand\opbraces{ m g o d() }
+{
+	\IfNoValueTF{#2}
+	{
+		\IfNoValueTF{#3}
+			{
+				\IfNoValueTF{#4}
+				{#1}
+				{\fbraces{\lparen}{\rparen}{#1}{#4}}
+			}
+			{
+				\fbraces{\lbrack}{\rbrack}{#1}{#3}
+				\IfNoValueTF{#4}{}{(#4)}
+			}
+	}
+	{
+		\fbraces{\lbrace}{\rbrace}{#1}{#2}
+		\IfNoValueTF{#3}{}{[#3]}
+		\IfNoValueTF{#4}{}{(#4)}
+	}
+}
+\DeclareDocumentCommand\trigbraces{ m o d() }
+{
+	\IfNoValueTF{#3}
+	{#1 \IfNoValueTF{#2}{}{[#2]}}
+	{#1 \IfNoValueTF{#2}{}{^{#2}} \argopen(#3\argclose)}
+}
+
+% Trig function and operator redefinitions
+\ifx\trigopt 1
+	\let\sine\sin \DeclareDocumentCommand\sin{}{\trigbraces{\sine}}
+	\let\cosine\cos \DeclareDocumentCommand\cos{}{\trigbraces{\cosine}}
+	\let\tangent\tan \DeclareDocumentCommand\tan{}{\trigbraces{\tangent}}
+	\let\cosecant\csc \DeclareDocumentCommand\csc{}{\trigbraces{\cosecant}}
+	\let\secant\sec \DeclareDocumentCommand\sec{}{\trigbraces{\secant}}
+	\let\cotangent\cot \DeclareDocumentCommand\cot{}{\trigbraces{\cotangent}}
+	
+	\let\arcsine\arcsin \DeclareDocumentCommand\arcsin{}{\trigbraces{\arcsine}}
+	\let\arccosine\arccos \DeclareDocumentCommand\arccos{}{\trigbraces{\arccosine}}
+	\let\arctangent\arctan \DeclareDocumentCommand\arctan{}{\trigbraces{\arctangent}}
+	\DeclareMathOperator{\arccosecant}{arccsc}
+	\DeclareDocumentCommand\arccsc{}{\trigbraces{\arccosecant}}
+	\DeclareMathOperator{\arcsecant}{arcsec}
+	\DeclareDocumentCommand\arcsec{}{\trigbraces{\arcsecant}}
+	\DeclareMathOperator{\arccotangent}{arccot}
+	\DeclareDocumentCommand\arccot{}{\trigbraces{\arccotangent}}
+
+	\DeclareMathOperator{\asine}{asin}
+	\DeclareDocumentCommand\asin{}{\trigbraces{\asine}}
+	\DeclareMathOperator{\acosine}{acos}
+	\DeclareDocumentCommand\acos{}{\trigbraces{\acosine}}
+	\DeclareMathOperator{\atangent}{atan}
+	\DeclareDocumentCommand\atan{}{\trigbraces{\atangent}}
+	\DeclareMathOperator{\acosecant}{acsc}
+	\DeclareDocumentCommand\acsc{}{\trigbraces{\acosecant}}
+	\DeclareMathOperator{\asecant}{asec}
+	\DeclareDocumentCommand\asec{}{\trigbraces{\asecant}}
+	\DeclareMathOperator{\acotangent}{acot}
+	\DeclareDocumentCommand\acot{}{\trigbraces{\acotangent}}
+	
+	\let\hypsine\sinh \DeclareDocumentCommand\sinh{}{\trigbraces{\hypsine}}
+	\let\hypcosine\cosh \DeclareDocumentCommand\cosh{}{\trigbraces{\hypcosine}}
+	\let\hyptangent\tanh \DeclareDocumentCommand\tanh{}{\trigbraces{\hyptangent}}
+	\DeclareMathOperator{\hypcosecant}{csch}
+	\DeclareDocumentCommand\csch{}{\trigbraces{\hypcosecant}}
+	\DeclareMathOperator{\hypsecant}{sech}
+	\DeclareDocumentCommand\sech{}{\trigbraces{\hypsecant}}
+	\let\hypcotangent\coth \DeclareDocumentCommand\coth{}{\trigbraces{\hypcotangent}}
+	
+	\let\exponential\exp \DeclareDocumentCommand\exp{}{\opbraces{\exponential}}
+	\let\logarithm\log \DeclareDocumentCommand\log{}{\trigbraces{\logarithm}}
+	\let\naturallogarithm\ln \DeclareDocumentCommand\ln{}{\trigbraces{\naturallogarithm}}
+	\let\determinant\det \DeclareDocumentCommand\det{}{\opbraces{\determinant}}
+	\let\Probability\Pr \DeclareDocumentCommand\Pr{}{\opbraces{\Probability}}
+	\DeclareDocumentCommand\tr{}{\opbraces{\trace}}
+	\DeclareDocumentCommand\Tr{}{\opbraces{\Trace}}
+	\DeclareDocumentCommand\Res{}{\opbraces{\Residue}}
+\else
+	\DeclareMathOperator{\arccsc}{arccsc}
+	\DeclareMathOperator{\arcsec}{arcsec}
+	\DeclareMathOperator{\arccot}{arccot}
+	
+	\DeclareMathOperator{\asin}{asin}
+	\DeclareMathOperator{\acos}{acos}
+	\DeclareMathOperator{\atan}{atan}
+	\DeclareMathOperator{\acsc}{acsc}
+	\DeclareMathOperator{\asec}{asec}
+	\DeclareMathOperator{\acot}{acot}
+	
+	\DeclareMathOperator{\csch}{csch}
+	\DeclareMathOperator{\sech}{sech}
+	
+	\DeclareDocumentCommand\tr{}{\trace}
+	\DeclareDocumentCommand\Tr{}{\Trace}
+	\DeclareDocumentCommand\Res{}{\Residue}
+\fi
+
+% Quick quad text (math-mode text with \quad spacing)
+\DeclareDocumentCommand\qqtext{ s m }{\IfBooleanTF{#1}{}{\quad}\text{#2}\quad}
+\DeclareDocumentCommand\qq{}{\qqtext}
+
+\DeclareDocumentCommand\qcomma{}{,\quad}
+\DeclareDocumentCommand\qc{}{\qcomma}
+
+\DeclareDocumentCommand\qif{s}{\IfBooleanTF{#1}{}{\quad}\text{if}\quad}
+\DeclareDocumentCommand\qthen{s}{\IfBooleanTF{#1}{}{\quad}\text{then}\quad}
+\DeclareDocumentCommand\qelse{s}{\IfBooleanTF{#1}{}{\quad}\text{else}\quad}
+\DeclareDocumentCommand\qotherwise{s}{\IfBooleanTF{#1}{}{\quad}\text{otherwise}\quad}
+\DeclareDocumentCommand\qunless{s}{\IfBooleanTF{#1}{}{\quad}\text{unless}\quad}
+\DeclareDocumentCommand\qgiven{s}{\IfBooleanTF{#1}{}{\quad}\text{given}\quad}
+\DeclareDocumentCommand\qusing{s}{\IfBooleanTF{#1}{}{\quad}\text{using}\quad}
+\DeclareDocumentCommand\qassume{s}{\IfBooleanTF{#1}{}{\quad}\text{assume}\quad}
+\DeclareDocumentCommand\qsince{s}{\IfBooleanTF{#1}{}{\quad}\text{since}\quad}
+\DeclareDocumentCommand\qlet{s}{\IfBooleanTF{#1}{}{\quad}\text{let}\quad}
+\DeclareDocumentCommand\qfor{s}{\IfBooleanTF{#1}{}{\quad}\text{for}\quad}
+\DeclareDocumentCommand\qall{s}{\IfBooleanTF{#1}{}{\quad}\text{all}\quad}
+\DeclareDocumentCommand\qeven{s}{\IfBooleanTF{#1}{}{\quad}\text{even}\quad}
+\DeclareDocumentCommand\qodd{s}{\IfBooleanTF{#1}{}{\quad}\text{odd}\quad}
+\DeclareDocumentCommand\qinteger{s}{\IfBooleanTF{#1}{}{\quad}\text{integer}\quad}
+\DeclareDocumentCommand\qand{s}{\IfBooleanTF{#1}{}{\quad}\text{and}\quad}
+\DeclareDocumentCommand\qor{s}{\IfBooleanTF{#1}{}{\quad}\text{or}\quad}
+\DeclareDocumentCommand\qas{s}{\IfBooleanTF{#1}{}{\quad}\text{as}\quad}
+\DeclareDocumentCommand\qin{s}{\IfBooleanTF{#1}{}{\quad}\text{in}\quad}
+\DeclareDocumentCommand\qcc{s}{\IfBooleanTF{#1}{}{\quad}\text{c.c.}\quad}
+
+% Derivatives
+\DeclareDocumentCommand\differential{ o g d() }{ % Differential 'd'
+	% o: optional n for nth differential
+	% g: optional argument for readability and to control spacing
+	% d: long-form as in d(cos x)
+	\IfNoValueTF{#2}{
+		\IfNoValueTF{#3}
+			{\diffd\IfNoValueTF{#1}{}{^{#1}}}
+			{\mathinner{\diffd\IfNoValueTF{#1}{}{^{#1}}\argopen(#3\argclose)}}
+		}
+		{\mathinner{\diffd\IfNoValueTF{#1}{}{^{#1}}#2} \IfNoValueTF{#3}{}{(#3)}}
+	}
+\DeclareDocumentCommand\dd{}{\differential} % Shorthand for \differential
+
+\DeclareDocumentCommand\derivative{ s o m g d() }
+{ % Total derivative
+	% s: star for \flatfrac flat derivative
+	% o: optional n for nth derivative
+	% m: mandatory (x in df/dx)
+	% g: optional (f in df/dx)
+	% d: long-form d/dx(...)
+	\IfBooleanTF{#1}
+	{\let\fractype\flatfrac}
+	{\let\fractype\frac}
+	\IfNoValueTF{#4}
+	{
+		\IfNoValueTF{#5}
+		{\fractype{\diffd \IfNoValueTF{#2}{}{^{#2}}}{\diffd #3\IfNoValueTF{#2}{}{^{#2}}}}
+		{\fractype{\diffd \IfNoValueTF{#2}{}{^{#2}}}{\diffd #3\IfNoValueTF{#2}{}{^{#2}}} \argopen(#5\argclose)}
+	}
+	{\fractype{\diffd \IfNoValueTF{#2}{}{^{#2}} #3}{\diffd #4\IfNoValueTF{#2}{}{^{#2}}}}
+}
+\DeclareDocumentCommand\dv{}{\derivative} % Shorthand for \derivative
+
+\DeclareDocumentCommand\partialderivative{ s o m g g d() }
+{ % Partial derivative
+	% s: star for \flatfrac flat derivative
+	% o: optional n for nth derivative
+	% m: mandatory (x in df/dx)
+	% g: optional (f in df/dx)
+	% g: optional (y in d^2f/dxdy)
+	% d: long-form d/dx(...)
+	\IfBooleanTF{#1}
+	{\let\fractype\flatfrac}
+	{\let\fractype\frac}
+	\IfNoValueTF{#4}
+	{
+		\IfNoValueTF{#6}
+		{\fractype{\partial \IfNoValueTF{#2}{}{^{#2}}}{\partial #3\IfNoValueTF{#2}{}{^{#2}}}}
+		{\fractype{\partial \IfNoValueTF{#2}{}{^{#2}}}{\partial #3\IfNoValueTF{#2}{}{^{#2}}} \argopen(#6\argclose)}
+	}
+	{
+		\IfNoValueTF{#5}
+		{\fractype{\partial \IfNoValueTF{#2}{}{^{#2}} #3}{\partial #4\IfNoValueTF{#2}{}{^{#2}}}}
+		{\fractype{\partial^2 #3}{\partial #4 \partial #5}}
+	}
+}
+\DeclareDocumentCommand\pderivative{}{\partialderivative} % Shorthand for \partialderivative
+\DeclareDocumentCommand\pdv{}{\partialderivative} % Shorthand for \partialderivative
+
+\DeclareDocumentCommand\variation{ o g d() }{ % Functional variation
+	% o: optional n for nth differential
+	% g: optional argument for readability and to control spacing
+	% d: long-form as in d(F(g))
+	\IfNoValueTF{#2}{
+		\IfNoValueTF{#3}
+			{\delta \IfNoValueTF{#1}{}{^{#1}}}
+			{\mathinner{\delta \IfNoValueTF{#1}{}{^{#1}}\argopen(#3\argclose)}}
+		}
+		{\mathinner{\delta \IfNoValueTF{#1}{}{^{#1}}#2} \IfNoValueTF{#3}{}{(#3)}}
+	}
+\DeclareDocumentCommand\var{}{\variation} % Shorthand for \variation
+
+\DeclareDocumentCommand\functionalderivative{ s o m g d() }
+{ % Functional derivative
+	% s: star for \flatfrac flat derivative
+	% o: optional n for nth derivative
+	% m: mandatory (g in dF/dg)
+	% g: optional (F in dF/dg)
+	% d: long-form d/dx(...)
+	\IfBooleanTF{#1}
+	{\let\fractype\flatfrac}
+	{\let\fractype\frac}
+	\IfNoValueTF{#4}
+	{
+		\IfNoValueTF{#5}
+		{\fractype{\variation \IfNoValueTF{#2}{}{^{#2}}}{\variation #3\IfNoValueTF{#2}{}{^{#2}}}}
+		{\fractype{\variation \IfNoValueTF{#2}{}{^{#2}}}{\variation #3\IfNoValueTF{#2}{}{^{#2}}} \argopen(#5\argclose)}
+	}
+	{\fractype{\variation \IfNoValueTF{#2}{}{^{#2}} #3}{\variation #4\IfNoValueTF{#2}{}{^{#2}}}}
+}
+\DeclareDocumentCommand\fderivative{}{\functionalderivative} % Shorthand for \functionalderivative
+\DeclareDocumentCommand\fdv{}{\functionalderivative} % Shorthand for \functionalderivative
+
+% Bra-ket notation
+\DeclareDocumentCommand\bra{ s m t\ket s g }
+{ % Bra
+	\IfBooleanTF{#3}
+	{ % Contraction
+		\IfBooleanTF{#1}
+		{ % Bra has a star: no resize
+			\IfNoValueTF{#5}
+			{\braket*{#2}{} \IfBooleanTF{#4}{*}{}}
+			{\braket*{#2}{#5}}
+		}
+		{
+			\IfBooleanTF{#4}
+			{ % Ket has a star: no resize
+				\IfNoValueTF{#5}
+				{\braket{#2}{} *}
+				{\braket*{#2}{#5}}
+			}
+			{\braket{#2}{\IfNoValueTF{#5}{}{#5}}} % Neither term is starred: auto sizing
+		}
+	}
+	{ % No contraction
+		\IfBooleanTF{#1}
+		{\vphantom{#2}\left\langle\smash{#2}\right\rvert}
+		{\left\langle{#2}\right\rvert}
+		\IfBooleanTF{#4}{*}{}
+		\IfNoValueTF{#5}{}{#5}
+	}
+}
+
+\DeclareDocumentCommand\ket{ s m }
+{ % Ket
+	\IfBooleanTF{#1}
+	{\vphantom{#2}\left\lvert\smash{#2}\right\rangle} % No resize
+	{\left\lvert{#2}\right\rangle} % Auto sizing
+}
+
+\DeclareDocumentCommand\innerproduct{ s m g }
+{ % Inner product
+	\IfBooleanTF{#1}
+	{ % No resize
+		\IfNoValueTF{#3}
+		{\vphantom{#2}\left\langle\smash{#2}\middle\vert\smash{#2}\right\rangle}
+		{\vphantom{#2#3}\left\langle\smash{#2}\middle\vert\smash{#3}\right\rangle}
+	}
+	{ % Auto resize
+		\IfNoValueTF{#3}
+		{\left\langle{#2}\middle\vert{#2}\right\rangle}
+		{\left\langle{#2}\middle\vert{#3}\right\rangle}
+	}
+}
+\DeclareDocumentCommand\braket{}{\innerproduct} % Alternative for \innerproduct
+\DeclareDocumentCommand\ip{}{\innerproduct} % Shorthand for \innerproduct
+	
+\DeclareDocumentCommand\outerproduct{ s m g }
+{ % Dyad
+	\IfBooleanTF{#1}
+	{ % No resize
+		\IfNoValueTF{#3}
+		{\vphantom{#2}\left\lvert\smash{#2}\middle\rangle\!\middle\langle\smash{#2}\right\rvert}
+		{\vphantom{#2#3}\left\lvert\smash{#2}\middle\rangle\!\middle\langle\smash{#3}\right\rvert}
+	}
+	{ % Auto resize
+		\IfNoValueTF{#3}
+		{\left\lvert{#2}\middle\rangle\!\middle\langle{#2}\right\rvert}
+		{\left\lvert{#2}\middle\rangle\!\middle\langle{#3}\right\rvert}
+	}
+}
+\DeclareDocumentCommand\dyad{}{\outerproduct} % Alternative for \outerproduct
+\DeclareDocumentCommand\op{}{\dyad} % Shorthand for \outerproduct
+\DeclareDocumentCommand\ketbra{}{\dyad} % Alternative for \outerproduct
+
+\DeclareDocumentCommand\expectationvalue{ s s m g }
+{ % Expectation value
+	\IfNoValueTF{#4}
+	{
+		\IfBooleanTF{#1}
+		{\vphantom{#3}\left\langle\smash{#3}\right\rangle} % Starred implicit form: no resizing
+		{\left\langle{#3}\right\rangle} % Normal implicit form: auto sizing
+	}
+	{
+		\IfBooleanTF{#1}
+		{
+			\IfBooleanTF{#2}
+			{\left\langle{#4}\middle\vert{#3}\middle\vert{#4}\right\rangle} % Double starred explicit form: total auto sizing
+			{\vphantom{#3#4}\left\langle\smash{#4}\middle\vert\smash{#3}\middle\vert\smash{#4}\right\rangle} % Starred explicit form: no resizing
+		}
+		{\vphantom{#3}\left\langle{#4}\middle\vert\smash{#3}\middle\vert{#4}\right\rangle} % Normal explicit form: only resize based on bra/ket arguments
+	}
+}
+\DeclareDocumentCommand\expval{}{\expectationvalue} % Shorthand for \expectationvalue
+\DeclareDocumentCommand\ev{}{\expectationvalue} % Shorthand for \expectationvalue
+\DeclareDocumentCommand\vev{ m }{\expectationvalue{#1}{0}} % Vacuum expectation value
+
+\DeclareDocumentCommand\matrixelement{ s s m m m }
+{ % Matrix element
+	\IfBooleanTF{#1}
+	{
+		\IfBooleanTF{#2}
+		{\left\langle{#3}\middle\vert{#4}\middle\vert{#5}\right\rangle} % Double starred: total resizing
+		{\vphantom{#3#4#5}\left\langle\smash{#3}\middle\vert\smash{#4}\middle\vert\smash{#5}\right\rangle} % Starred: no resizing
+	}
+	{\vphantom{#4}\left\langle{#3}\middle\vert\smash{#4}\middle\vert{#5}\right\rangle} % Normal: only resize based on bra/ket arguments
+}
+\DeclareDocumentCommand\matrixel{}{\matrixelement} % Shorthand for \matrixelement
+\DeclareDocumentCommand\mel{}{\matrixelement} % Shorthand for \matrixelement
+
+% Matrix macros
+\DeclareDocumentCommand\identitymatrix{m}
+{
+	{
+		\newtoks\matrixtoks
+		\global\matrixtoks = {}
+		\newcount\rowcount
+		\newcount\colcount
+		\loop
+		\colcount = 0
+		\advance \rowcount by 1
+		{
+			\loop
+			\advance \colcount by 1
+			\edef\addtoks
+			{
+				\ifnum \colcount = 1 \else & \fi
+				\ifnum \colcount = \rowcount 1 \else 0 \fi
+			}
+			\global\matrixtoks = \expandafter{\the\expandafter\matrixtoks\addtoks}
+			\ifnum \colcount < #1
+			\repeat
+		}
+		\ifnum \rowcount < #1
+			\global\matrixtoks = \expandafter{\the\matrixtoks \\ }
+			\repeat
+	}
+	\the\matrixtoks
+}
+\DeclareDocumentCommand\imat{}{\identitymatrix}
+
+\DeclareDocumentCommand\xmatrix{ s m m m }
+{
+	{
+		\newtoks\matrixtoks
+		\global\matrixtoks = {}
+		\newcount\rowcount
+		\newcount\colcount
+		\loop
+		\colcount = 0
+		\advance \rowcount by 1
+		{
+			\loop
+			\advance \colcount by 1
+			\edef\addtoks{\ifnum \colcount = 1 \else & \fi #2 \IfBooleanTF{#1}{_{\ifnum #3 > 1 \the\rowcount \fi \ifnum #4 > 1 \the\colcount \fi}}{}}
+			\global\matrixtoks = \expandafter{\the\expandafter\matrixtoks\addtoks}
+			\ifnum \colcount < #4
+			\repeat
+		}
+		\ifnum \rowcount < #3
+			\global\matrixtoks = \expandafter{\the\matrixtoks \\ }
+			\repeat
+	}
+	\the\matrixtoks
+}
+\DeclareDocumentCommand\xmat{}{\xmatrix}
+
+\DeclareDocumentCommand\zeromatrix{ m g }{\IfNoValueTF{#2}{\xmatrix{0}{#1}{#1}}{\xmatrix{0}{#1}{#2}}}
+\DeclareDocumentCommand\zmat{}{\zeromatrix}
+
+\DeclareDocumentCommand\paulixmatrix{}{0&1\\1&0}
+\DeclareDocumentCommand\pauliymatrix{}{0&-i\\i&0}
+\DeclareDocumentCommand\paulizmatrix{}{1&0\\0&-1}
+\DeclareDocumentCommand\paulimatrix{m}
+{
+	\let\argin=#1
+	\ifx\argin 0 \identitymatrix{2} \else
+	\ifx\argin 1 \paulixmatrix \else
+	\ifx\argin 2 \pauliymatrix \else
+	\ifx\argin 3 \paulizmatrix \else
+	\ifx\argin x \paulixmatrix \else
+	\ifx\argin y \pauliymatrix \else
+	\ifx\argin z \paulizmatrix \fi\fi\fi\fi\fi\fi\fi
+}
+\DeclareDocumentCommand\pmat{}{\paulimatrix}
+
+\DeclareDocumentCommand\diagonalmatrix{O{} >{\SplitList{,}}m }{\@dmat{#1}#2}
+\DeclareDocumentCommand\@dmat{mmggggggg}
+{
+	\newtoks\matrixtoks
+	\global\matrixtoks = {}
+	\IfNoValueTF{#3}
+	{#2}
+	{
+		\IfNoValueTF{#4}
+		{\global\matrixtoks = \expandafter{\mqty{#2}&#1\\#1&\mqty{#3}}}
+		{
+			\IfNoValueTF{#5}
+			{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1\\#1&\mqty{#3}&#1\\#1&#1&\mqty{#4}}}
+			{
+				\IfNoValueTF{#6}
+				{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1&#1\\#1&\mqty{#3}&#1&#1\\#1&#1&\mqty{#4}&#1\\#1&#1&#1&\mqty{#5}}}
+				{
+					\IfNoValueTF{#7}
+					{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1&#1&#1\\#1&\mqty{#3}&#1&#1&#1\\#1&#1&\mqty{#4}&#1&#1\\#1&#1&#1&\mqty{#5}&#1\\#1&#1&#1&#1&\mqty{#6}}}
+					{
+						\IfNoValueTF{#8}
+						{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1&#1&#1&#1\\#1&\mqty{#3}&#1&#1&#1&#1\\#1&#1&\mqty{#4}&#1&#1&#1\\#1&#1&#1&\mqty{#5}&#1&#1\\#1&#1&#1&#1&\mqty{#6}&#1\\#1&#1&#1&#1&#1&\mqty{#7}}}
+						{
+							\IfNoValueTF{#9}
+							{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1&#1&#1&#1&#1\\#1&\mqty{#3}&#1&#1&#1&#1&#1\\#1&#1&\mqty{#4}&#1&#1&#1&#1\\#1&#1&#1&\mqty{#5}&#1&#1&#1\\#1&#1&#1&#1&\mqty{#6}&#1&#1\\#1&#1&#1&#1&#1&\mqty{#7}&#1\\#1&#1&#1&#1&#1&#1&\mqty{#8}}}
+							{\global\matrixtoks = \expandafter{\mqty{#2}&#1&#1&#1&#1&#1&#1&#1\\#1&\mqty{#3}&#1&#1&#1&#1&#1&#1\\#1&#1&\mqty{#4}&#1&#1&#1&#1&#1\\#1&#1&#1&\mqty{#5}&#1&#1&#1&#1\\#1&#1&#1&#1&\mqty{#6}&#1&#1&#1\\#1&#1&#1&#1&#1&\mqty{#7}&#1&#1\\#1&#1&#1&#1&#1&#1&\mqty{#8}&#1\\#1&#1&#1&#1&#1&#1&#1&\mqty{#9}}}
+						}
+					}
+				}
+			}
+		}
+	}
+	\the\matrixtoks
+}
+\DeclareDocumentCommand\dmat{}{\diagonalmatrix}
+
+\DeclareDocumentCommand\antidiagonalmatrix{O{} >{\SplitList{,}}m }{\@admat{#1}#2}
+\DeclareDocumentCommand\@admat{mmggggggg}
+{
+	\newtoks\matrixtoks
+	\global\matrixtoks = {}
+	\IfNoValueTF{#3}
+	{#2}
+	{
+		\IfNoValueTF{#4}
+		{\global\matrixtoks = \expandafter{#1&\mqty{#2}\\\mqty{#3}&#1}}
+		{
+			\IfNoValueTF{#5}
+			{\global\matrixtoks = \expandafter{#1&#1&\mqty{#2}\\#1&\mqty{#3}&#1\\\mqty{#4}&#1&#1}}
+			{
+				\IfNoValueTF{#6}
+				{\global\matrixtoks = \expandafter{#1&#1&#1&\mqty{#2}\\#1&#1&\mqty{#3}&#1\\#1&\mqty{#4}&#1&#1\\\mqty{#5}&#1&#1&#1}}
+				{
+					\IfNoValueTF{#7}
+					{\global\matrixtoks = \expandafter{#1&#1&#1&#1&\mqty{#2}\\#1&#1&#1&\mqty{#3}&#1\\#1&#1&\mqty{#4}&#1&#1\\#1&\mqty{#5}&#1&#1&#1\\\mqty{#6}&#1&#1&#1&#1}}
+					{
+						\IfNoValueTF{#8}
+						{\global\matrixtoks = \expandafter{#1&#1&#1&#1&#1&\mqty{#2}\\#1&#1&#1&#1&\mqty{#3}&#1\\#1&#1&#1&\mqty{#4}&#1&#1\\#1&#1&\mqty{#5}&#1&#1&#1\\#1&\mqty{#6}&#1&#1&#1&#1\\\mqty{#7}&#1&#1&#1&#1&#1}}
+						{
+							\IfNoValueTF{#9}
+							{\global\matrixtoks = \expandafter{#1&#1&#1&#1&#1&#1&\mqty{#2}\\#1&#1&#1&#1&#1&\mqty{#3}&#1\\#1&#1&#1&#1&\mqty{#4}&#1&#1\\#1&#1&#1&\mqty{#5}&#1&#1&#1\\#1&#1&\mqty{#6}&#1&#1&#1&#1\\#1&\mqty{#7}&#1&#1&#1&#1&#1\\\mqty{#8}&#1&#1&#1&#1&#1&#1}}
+							{\global\matrixtoks = \expandafter{#1&#1&#1&#1&#1&#1&#1&\mqty{#2}\\#1&#1&#1&#1&#1&#1&\mqty{#3}&#1\\#1&#1&#1&#1&#1&\mqty{#4}&#1&#1\\#1&#1&#1&#1&\mqty{#5}&#1&#1&#1\\#1&#1&#1&\mqty{#6}&#1&#1&#1&#1\\#1&#1&\mqty{#7}&#1&#1&#1&#1&#1\\#1&\mqty{#8}&#1&#1&#1&#1&#1&#1\\\mqty{#9}&#1&#1&#1&#1&#1&#1&#1}}
+						}
+					}
+				}
+			}
+		}
+	}
+	\the\matrixtoks
+}
+\DeclareDocumentCommand\admat{}{\antidiagonalmatrix}
+
+% Misc
+\DeclareDocumentCommand\flatfrac{ m m }{\left.#1\middle\slash#2\right.}
+\DeclareDocumentCommand\homework{}{ % You can try it
+	\ensuremath{
+	\div{\vb{E}}=\frac{\rho}{\epsilon_0} \qc
+	\div{\vb{B}}=0 \qc
+	\curl{\vb{E}}=-\pdv{\vb{B}}{t}\qc
+	\curl{\vb{B}}=\mu_0\vb{J}+\frac{1}{c^2}\pdv{\vb{E}}{t}\qc
+	H\ket{\Psi}=i\hbar\pdv{}{t}\ket{\Psi},
+	\qq{all else follows.}
+	}
+}

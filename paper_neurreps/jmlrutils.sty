@@ -1,0 +1,612 @@
+%%
+%% This is file `jmlrutils.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% jmlr.dtx  (with options: `jmlrutils.sty,package')
+%% 
+%%  jmlr.dtx
+%%  Copyright 2022 Nicola Talbot
+%% 
+%%  This work may be distributed and/or modified under the
+%%  conditions of the LaTeX Project Public License, either version 1.3
+%%  of this license or (at your option) any later version.
+%%  The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%%  and version 1.3 or later is part of all distributions of LaTeX
+%%  version 2005/12/01 or later.
+%% 
+%%  This work has the LPPL maintenance status `maintained'.
+%% 
+%%  The Current Maintainer of this work is Nicola Talbot.
+%% 
+%%  This work consists of the files jmlr.dtx and jmlr.ins and the derived files jmlrutils.sty, jmlr.cls, jmlrbook.cls.
+%% 
+%% \CharacterTable
+%%  {Upper-case    \A\B\C\D\E\F\G\H\I\J\K\L\M\N\O\P\Q\R\S\T\U\V\W\X\Y\Z
+%%   Lower-case    \a\b\c\d\e\f\g\h\i\j\k\l\m\n\o\p\q\r\s\t\u\v\w\x\y\z
+%%   Digits        \0\1\2\3\4\5\6\7\8\9
+%%   Exclamation   \!     Double quote  \"     Hash (number) \#
+%%   Dollar        \$     Percent       \%     Ampersand     \&
+%%   Acute accent  \'     Left paren    \(     Right paren   \)
+%%   Asterisk      \*     Plus          \+     Comma         \,
+%%   Minus         \-     Point         \.     Solidus       \/
+%%   Colon         \:     Semicolon     \;     Less than     \<
+%%   Equals        \=     Greater than  \>     Question mark \?
+%%   Commercial at \@     Left bracket  \[     Backslash     \\
+%%   Right bracket \]     Circumflex    \^     Underscore    \_
+%%   Grave accent  \`     Left brace    \{     Vertical bar  \|
+%%   Right brace   \}     Tilde         \~}
+%% First editor:
+%% Second editor:
+\ProvidesPackage{jmlrutils}[2022/02/09 v1.30 (NLCT)]
+\newif\ifjmlrutilsmaths
+\jmlrutilsmathstrue
+\DeclareOption{maths}{\jmlrutilsmathstrue}
+\DeclareOption{nomaths}{\jmlrutilsmathsfalse}
+\DeclareOption{math}{\jmlrutilsmathstrue}
+\DeclareOption{nomath}{\jmlrutilsmathsfalse}
+\newif\ifjmlrutilstheorems
+\jmlrutilstheoremstrue
+\DeclareOption{theorems}{\jmlrutilstheoremstrue}
+\DeclareOption{notheorems}{\jmlrutilstheoremsfalse}
+\newif\ifjmlrcleveref
+\jmlrclevereffalse
+\DeclareOption{cleveref}{\jmlrclevereftrue}
+\DeclareOption{nocleveref}{\jmlrclevereffalse}
+\newif\ifjmlrutilssubfloats
+\jmlrutilssubfloatstrue
+\DeclareOption{subfloats}{\jmlrutilssubfloatstrue}
+\DeclareOption{nosubfloats}{\jmlrutilssubfloatsfalse}
+\ProcessOptions
+\RequirePackage{etoolbox}
+\ifjmlrutilsmaths
+  \RequirePackage{amsmath}
+\fi
+\ifjmlrcleveref
+  \ifdef\jmlrprehyperref
+  {
+    \jmlrprehyperref
+    \@ifundefined{@pre@hyperref}{}{\@pre@hyperref\undef\@pre@hyperref}
+    \RequirePackage{hyperref}
+    \let\jmlrprehyperref\relax
+    \@ifundefined{@post@hyperref}{}{\@post@hyperref\undef\@post@hyperref}
+  }
+  {}
+  \RequirePackage{aliascnt}
+  \RequirePackage{cleveref}
+\fi
+\@ifundefined{iftablecaptiontop}
+{\newif\iftablecaptiontop
+\tablecaptiontoptrue}
+{}
+\newcommand*{\@jmlr@reflistsep}{, }
+\newcommand*{\@jmlr@reflistlastsep}{ and }
+\newcommand*{\sectionrefname}{Section}
+\newcommand*{\sectionsrefname}{Sections}
+\newcommand*{\equationrefname}{Equation}
+\newcommand*{\equationsrefname}{Equations}
+\newcommand*{\tablerefname}{Table}
+\newcommand*{\tablesrefname}{Tables}
+\newcommand*{\figurerefname}{Figure}
+\newcommand*{\figuresrefname}{Figures}
+\newcommand*{\algorithmrefname}{Algorithm}
+\newcommand*{\algorithmsrefname}{Algorithms}
+\newcommand*{\theoremrefname}{Theorem}
+\newcommand*{\theoremsrefname}{Theorems}
+\newcommand*{\lemmarefname}{Lemma}
+\newcommand*{\lemmasrefname}{Lemmas}
+\newcommand*{\remarkrefname}{Remark}
+\newcommand*{\remarksrefname}{Remarks}
+\newcommand*{\corollaryrefname}{Corollary}
+\newcommand*{\corollarysrefname}{Corollaries}
+\newcommand*{\definitionrefname}{Definition}
+\newcommand*{\definitionsrefname}{Definitions}
+\newcommand*{\conjecturerefname}{Conjecture}
+\newcommand*{\conjecturesrefname}{Conjectures}
+\newcommand*{\axiomrefname}{Axiom}
+\newcommand*{\axiomsrefname}{Axioms}
+\newcommand*{\examplerefname}{Example}
+\newcommand*{\examplesrefname}{Examples}
+\newcommand*{\appendixrefname}{Appendix}
+\newcommand*{\appendixsrefname}{Appendices}
+\newcommand*{\partrefname}{Part}
+\newcommand*{\partsrefname}{Parts}
+\newrobustcmd*{\objectref}[5]{%
+  \let\@objectname\@empty
+  \def\@objectref{}%
+  \let\@prevsep\@empty
+  \@for\@thislabel:=#1\do{%
+    \toks@{\@prevsep}%
+    \protected@edef\@objectref{\@objectref\the\toks@
+      #4\ref{\@thislabel}#5}%
+    \ifx\@objectname\@empty
+      \let\@objectname#2% singular tag
+    \else
+      \let\@objectname#3% plural tag
+      \let\@prevsep\@jmlr@reflistsep
+    \fi
+  }%
+  \ifx\@objectname#3% plural tag
+    \let\@prevsep\@jmlr@reflistlastsep
+  \fi
+  \@objectname~\@objectref
+}
+\newcommand*{\sectionref}[1]{%
+  \objectref{#1}{\sectionrefname}{\sectionsrefname}{}{}}
+\newcommand*{\equationref}[1]{%
+  \objectref{#1}{\equationrefname}{\equationsrefname}()}
+\newcommand*{\tableref}[1]{%
+  \objectref{#1}{\tablerefname}{\tablesrefname}{}{}}
+\newcommand*{\figureref}[1]{%
+  \objectref{#1}{\figurerefname}{\figuresrefname}{}{}}
+\newcommand*{\algorithmref}[1]{%
+  \objectref{#1}{\algorithmrefname}{\algorithmsrefname}{}{}}
+\newcommand*{\theoremref}[1]{%
+  \objectref{#1}{\theoremrefname}{\theoremsrefname}{}{}}
+\newcommand*{\lemmaref}[1]{%
+  \objectref{#1}{\lemmarefname}{\lemmasrefname}{}{}}
+\newcommand*{\remarkref}[1]{%
+  \objectref{#1}{\remarkrefname}{\remarksrefname}{}{}}
+\newcommand*{\corollaryref}[1]{%
+  \objectref{#1}{\corollaryrefname}{\corollarysrefname}{}{}}
+\newcommand*{\definitionref}[1]{%
+  \objectref{#1}{\definitionrefname}{\definitionsrefname}{}{}}
+\newcommand*{\conjectureref}[1]{%
+  \objectref{#1}{\conjecturerefname}{\conjecturesrefname}{}{}}
+\newcommand*{\axiomref}[1]{%
+  \objectref{#1}{\axiomrefname}{\axiomsrefname}{}{}}
+\newcommand*{\exampleref}[1]{%
+  \objectref{#1}{\examplerefname}{\examplesrefname}{}{}}
+\newcommand*{\appendixref}[1]{%
+  \objectref{#1}{\appendixrefname}{\appendixsrefname}{}{}}
+\newcommand*{\partref}[1]{%
+  \objectref{#1}{\partrefname}{\partsrefname}{}{}}
+\newcommand{\floatconts}[3]{%
+  \@ifundefined{\@captype conts}{\tableconts{#1}{#2}{#3}}%
+  {\csname\@captype conts\endcsname{#1}{#2}{#3}}%
+}
+\providecommand{\tableconts}[3]{%
+  #2\label{#1}\vskip\baselineskip
+  {\centering #3\par}%
+}
+\newcommand{\figureconts}[3]{%
+  {\centering #3\par}%
+  \vskip\baselineskip
+  #2\label{#1}%
+}
+\newcommand{\algocfconts}[3]{%
+  \jmlralgorule\par\smallskip
+  #2\label{#1}% caption and label
+  \jmlralgorule\par\smallskip
+  #3% algorithm content
+  \jmlralgorule
+}
+\newcommand{\jmlralgorule}{\kern2pt\hrule height.8pt depth0pt\kern2pt}
+\newenvironment{algorithm}[1][htbp]%
+{%
+  \ifundef{\algocf}%
+  {`algorithm2e' package is required if you want to
+   use the algorithm environment}%
+  {}%
+  \begin{algocf}[#1]%
+  \renewcommand\@makecaption[2]{%
+    \hskip\AlCapHSkip
+    \parbox[t]{\dimexpr\linewidth-\AlCapHSkip}{\algocf@captiontext{##1}{##2}}%
+  }%
+}%
+{%
+  \end{algocf}%
+}
+\AtBeginDocument{%
+ \@ifpackageloaded{graphicx}%
+ {\let\@jmlr@ifgraphicxloaded\@firstoftwo}%
+ {\let\@jmlr@ifgraphicxloaded\@secondoftwo}%
+}
+\newcommand*{\includeteximage}[2][]{%
+  \@jmlr@ifgraphicxloaded
+  {%
+    \def\Gin@req@sizes{%
+      \Gin@req@height\Gin@nat@height
+      \Gin@req@width\Gin@nat@width}%
+    \begingroup
+      \let\input@path\Ginput@path
+      \IfFileExists{#2}%
+      {%
+        \toks@{\input{#2}}%
+        \ifstrempty{#1}
+        {}%
+        {%
+          \@tempswatrue
+          \setkeys{Gin}{#1}%
+          \Gin@esetsize
+        }%
+        \the\toks@
+      }%
+      {\@warning{File `#2' not found}}%
+    \endgroup
+  }%
+  {\PackageError{jmlrutils}{`graphicx' package is required
+   if you want to use \string\includeteximage}{}}%
+}
+\ifjmlrutilssubfloats
+  \newcounter{subfigure}
+  \@addtoreset{subfigure}{figure}
+  \renewcommand*{\thesubfigure}{\alph{subfigure}}
+  \renewcommand*{\p@subfigure}{\expandafter\@p@subfigure}
+  \newcommand*{\@p@subfigure}[1]{%
+    \protect\@subfigurelabel{\thefigure}{\thesubfigure}%
+  }
+  \@ifl@t@r\fmtversion{2019/08/22}%
+  {
+    \newcommand*\@subfigurelabel[3]{#1\subfigurelabel{#2}}
+    \newcommand*\@subfigref[1]{%
+      {%
+        \def\@subfigurelabel##1##2##3{\subfigurelabel{##2}}%
+        \ref{#1}%
+      }%
+    }
+  }%
+  {
+    \newcommand*\@subfigurelabel[2]{#1\subfigurelabel{#2}}
+    \newcommand*\@subfigref[1]{%
+      {%
+        \def\@subfigurelabel##1##2{\subfigurelabel{##2}}%
+        \ref{#1}%
+      }%
+    }
+  }
+  \newcommand*{\subfigref}[1]{%
+    \let\@objectname\@empty
+    \def\@objectref{}%
+    \let\@prevsep\@empty
+    \@for\@thislabel:=#1\do{%
+      \toks@{\@prevsep}%
+      \protected@edef\@objectref{\@objectref\the\toks@
+        \protect\@subfigref{\@thislabel}}%
+        \ifx\@objectname\@empty
+  \let\@objectname\@nil
+        \else
+  \let\@objectname\relax
+          \let\@prevsep\@jmlr@reflistsep
+        \fi
+    }%
+    \ifx\@objectname\relax
+      \let\@prevsep\@jmlr@reflistlastsep
+    \fi
+    \@objectref
+  }
+  \newcommand*{\subfigurelabel}[1]{(\emph{#1})}
+  \newsavebox\@subfloatcapbox
+  \newsavebox\@subfloatcontsbox
+  \newlength\jmlrminsubcaptionwidth
+  \newcommand*{\subfigure}[1][]{%
+    \bgroup
+    \def\@subfigcap{#1}%
+    \@subfigure
+  }
+  \newcommand*{\@subfigure}[2][b]{%
+    \advance\c@figure by 1\relax
+    \refstepcounter{subfigure}%
+    \sbox\@subfloatcapbox{\subfigurelabel{\thesubfigure}%
+    \ifx\@subfigcap\@empty
+    \else
+      \space\@subfigcap
+    \fi}%
+    \sbox\@subfloatcontsbox{#2}%
+    \settowidth{\@tempdima}{\usebox\@subfloatcontsbox}%
+    \settowidth{\@tempdimb}{\usebox\@subfloatcapbox}%
+    \ifdim\@tempdimb>\@tempdima
+      \settowidth\@tempdimb{\subfigurelabel{\thesubfigure}\space}%
+      \addtolength{\@tempdima}{-\@tempdimb}%
+      \ifdim\@tempdima>\jmlrminsubcaptionwidth
+        \sbox\@subfloatcapbox{\subfigurelabel{\thesubfigure}\space
+          \parbox[t]{\@tempdima}{\@subfigcap}}%
+      \else
+        \sbox\@subfloatcapbox{\subfigurelabel{\thesubfigure}\space
+          \parbox[t]{\jmlrminsubcaptionwidth}{\@subfigcap}}%
+      \fi
+    \else
+      \ifdim\@tempdimb<\jmlrminsubcaptionwidth
+        \sbox\@subfloatcapbox{\subfigurelabel{\thesubfigure}\space
+          \parbox[t]{\jmlrminsubcaptionwidth}{\@subfigcap}}%
+      \fi
+    \fi
+    \begin{tabular}[#1]{@{}c@{}}%
+    \usebox\@subfloatcontsbox\\\usebox\@subfloatcapbox
+    \end{tabular}%
+    \egroup
+  }
+  \newcounter{subtable}
+  \@addtoreset{subtable}{table}
+  \renewcommand*{\thesubtable}{\alph{subtable}}
+  \renewcommand*{\p@subtable}{\expandafter\@p@subtable}
+  \newcommand*{\@p@subtable}[1]{%
+    \protect\@subtablelabel{\thetable}{\thesubtable}%
+  }
+  \@ifl@t@r\fmtversion{2019/08/22}%
+  {
+    \newcommand*\@subtablelabel[3]{#1\subtablelabel{#2}}
+    \newcommand*\@subtabref[1]{%
+      {%
+        \def\@subtablelabel##1##2##3{\subtablelabel{##2}}%
+        \ref{#1}%
+      }%
+    }
+  }%
+  {
+    \newcommand*\@subtablelabel[2]{#1\subtablelabel{#2}}
+    \newcommand*\@subtabref[1]{%
+      {%
+        \def\@subtablelabel##1##2{\subtablelabel{##2}}%
+        \ref{#1}%
+      }%
+    }
+  }%
+  \newcommand*{\subtabref}[1]{%
+    \let\@objectname\@empty
+    \def\@objectref{}%
+    \let\@prevsep\@empty
+    \@for\@thislabel:=#1\do{%
+      \toks@{\@prevsep}%
+      \protected@edef\@objectref{\@objectref\the\toks@
+        \protect\@subtabref{\@thislabel}}%
+        \ifx\@objectname\@empty
+  \let\@objectname\@nil
+        \else
+  \let\@objectname\relax
+          \let\@prevsep\@jmlr@reflistsep
+        \fi
+    }%
+    \ifx\@objectname\relax
+      \let\@prevsep\@jmlr@reflistlastsep
+    \fi
+    \@objectref
+  }
+  \newcommand*{\subtablelabel}[1]{(\emph{#1})}
+  \newcommand*{\subtable}[1][]{%
+    \def\@subtabcap{#1}%
+    \@subtable
+  }
+  \newcommand*{\@subtable}[2][t]{%
+    \refstepcounter{subtable}%
+    \sbox\@subfloatcapbox{\subtablelabel{\thesubtable}%
+    \ifx\@subtabcap\@empty
+    \else
+      \space\@subtabcap
+    \fi}%
+    \sbox\@subfloatcontsbox{#2}%
+    \settowidth{\@tempdima}{\usebox\@subfloatcontsbox}%
+    \settowidth{\@tempdimb}{\usebox\@subfloatcapbox}%
+    \ifdim\@tempdimb>\@tempdima
+      \settowidth\@tempdimb{\subtablelabel{\thesubtable}\space}%
+      \addtolength{\@tempdima}{-\@tempdimb}%
+      \ifdim\@tempdima>\jmlrminsubcaptionwidth
+        \sbox\@subfloatcapbox{\subtablelabel{\thesubtable}\space
+          \parbox[t]{\@tempdima}{\@subtabcap}}%
+      \else
+        \sbox\@subfloatcapbox{\subtablelabel{\thesubtable}\space
+          \parbox[t]{\jmlrminsubcaptionwidth}{\@subtabcap}}%
+      \fi
+    \else
+      \ifdim\@tempdimb<\jmlrminsubcaptionwidth
+        \sbox\@subfloatcapbox{\subtablelabel{\thesubtable}\space
+          \parbox[t]{\jmlrminsubcaptionwidth}{\@subtabcap}}%
+      \fi
+    \fi
+    \begin{tabular}[#1]{@{}c@{}}%
+    \usebox\@subfloatcapbox\\\usebox\@subfloatcontsbox
+    \end{tabular}
+  }
+\fi
+\ifjmlrutilsmaths
+  \newcommand*{\set}[1]{\ensuremath{\mathcal{#1}}}
+  \let\orgvec\vec
+  \renewcommand*{\vec}[1]{\boldsymbol{#1}}
+\fi
+\newenvironment{enumerate*}%
+{%
+  \ifnum\@enumdepth=0\relax
+    \setcounter{enumi}{0}%
+  \fi
+  \ifnum\@enumdepth>\thr@@
+    \@toodeep
+  \else
+    \advance\@enumdepth\@ne
+    \def\@enumctr{enumi}%
+    \list
+      {\labelenumi}%
+      {\@nmbrlisttrue\def\@listctr{enumi}%
+       \def\makelabel##1{\hss\llap{##1}}}%
+  \fi
+}%
+{\endlist}
+\newenvironment{altdescription}[1]%
+  {\list{}%
+    {%
+      \settowidth{\labelwidth}{\altdescriptionlabel{#1}}%
+      \setlength{\labelsep}{15pt}%
+      \setlength{\leftmargin}{2\labelsep}%
+      \addtolength{\leftmargin}{\labelwidth}%
+      \setlength{\rightmargin}{\labelsep}%
+      \let\makelabel\altdescriptionlabel
+    }%
+  }%
+  {\endlist}
+
+\newcommand*{\altdescriptionlabel}[1]{\normalfont\bfseries #1\hfill}
+\newcommand*{\mailto}[1]{\texttt{#1}}
+\ifjmlrutilstheorems
+  \newcommand{\jmlrBlackBox}{\rule{1.5ex}{1.5ex}}
+  \providecommand{\BlackBox}{\jmlrBlackBox}
+  \newcommand{\jmlrQED}{\hfill\jmlrBlackBox\par\bigskip}
+\providecommand{\proofname}{Proof}
+  \newenvironment{proof}%
+  {%
+   \par\noindent{\bfseries\upshape \proofname\ }%
+  }%
+  {\jmlrQED}
+  \newcommand*{\theorembodyfont}[1]{%
+    \renewcommand*{\@theorembodyfont}{#1}%
+  }
+  \newcommand*{\@theorembodyfont}{\normalfont\itshape}%
+  \newcommand*{\theoremheaderfont}[1]{%
+    \renewcommand*{\@theoremheaderfont}{#1}%
+  }
+  \newcommand*{\@theoremheaderfont}{\normalfont\bfseries }%
+  \newcommand*{\theoremsep}[1]{%
+    \renewcommand*{\@theoremsep}{#1}%
+  }
+  \newcommand*{\@theoremsep}{}%
+  \newcommand*{\theorempostheader}[1]{%
+    \renewcommand*{\@theorempostheader}{#1}%
+  }
+  \newcommand*{\@theorempostheader}{}%
+  \let\jmlr@org@newtheorem\newtheorem
+  \renewcommand*{\newtheorem}{\@ifstar\jmlr@snewtheorem\jmlr@newtheorem}
+  \newcommand*{\jmlr@snewtheorem}[2]{%
+    \cslet{jmlr@thm@#1@body@font}{\@theorembodyfont}%
+    \cslet{jmlr@thm@#1@header@font}{\@theoremheaderfont}%
+    \cslet{jmlr@thm@#1@sep}{\@theoremsep}%
+    \cslet{jmlr@thm@#1@postheader}{\@theorempostheader}%
+    \newenvironment{#1}%
+    {%
+      \trivlist
+        \item
+        [%
+          \hskip\labelsep{\csuse{jmlr@thm@#1@header@font}#2%
+            \csuse{jmlr@thm@#1@postheader}%
+          }%
+        ]%
+        \mbox{}\csuse{jmlr@thm@#1@sep}%
+        \csuse{jmlr@thm@#1@body@font}%
+    }%
+    {%
+      \endtrivlist
+    }%
+  }
+  \newcommand{\jmlr@newtheorem}[1]{%
+    \cslet{jmlr@thm@#1@body@font}{\@theorembodyfont}%
+    \cslet{jmlr@thm@#1@header@font}{\@theoremheaderfont}%
+    \cslet{jmlr@thm@#1@sep}{\@theoremsep}%
+    \cslet{jmlr@thm@#1@postheader}{\@theorempostheader}%
+    \jmlr@org@newtheorem{#1}%
+  }
+  \renewcommand*{\@xthm}[2]{%
+    \def\@jmlr@currentthm{#1}%
+    \@begintheorem{#2}{\csname the#1\endcsname}%
+    \ignorespaces
+  }
+  \def\@ythm#1#2[#3]{%
+    \def\@jmlr@currentthm{#1}%
+    \@opargbegintheorem{#2}{\csname the#1\endcsname}{#3}%
+    \ignorespaces
+  }
+  \renewcommand*{\@begintheorem}[2]{%
+    \ifdef{\@jmlr@currentthm}%
+    {%
+      \letcs{\jmlr@this@theoremheader}{jmlr@thm@\@jmlr@currentthm @header@font}%
+      \letcs{\jmlr@this@theorembody}{jmlr@thm@\@jmlr@currentthm @body@font}%
+      \letcs{\jmlr@this@theoremsep}{jmlr@thm@\@jmlr@currentthm @sep}%
+      \letcs{\jmlr@this@theorempostheader}%
+         {jmlr@thm@\@jmlr@currentthm @postheader}%
+    }%
+    {%
+      \let\jmlr@this@theorembody\@theorembodyfont
+      \let\jmlr@this@theoremheader\@theoremheaderfont
+      \let\jmlr@this@theoremsep\@theoremsep
+      \let\jmlr@this@theorempostheader\@theorempostheader
+    }%
+    \trivlist
+      \item
+       [%
+        \hskip\labelsep{\jmlr@this@theoremheader #1\ #2%
+           \jmlr@this@theorempostheader}%
+       ]%
+      \mbox{}\jmlr@this@theoremsep
+      \jmlr@this@theorembody
+  }
+  \renewcommand*{\@opargbegintheorem}[3]{%
+    \ifdef{\@jmlr@currentthm}%
+    {%
+      \letcs{\jmlr@this@theoremheader}{jmlr@thm@\@jmlr@currentthm @header@font}%
+      \letcs{\jmlr@this@theorembody}{jmlr@thm@\@jmlr@currentthm @body@font}%
+      \letcs{\jmlr@this@theoremsep}{jmlr@thm@\@jmlr@currentthm @sep}%
+      \letcs{\jmlr@this@theorempostheader}%
+         {jmlr@thm@\@jmlr@currentthm @postheader}%
+    }%
+    {%
+      \let\jmlr@this@theorembody\@theorembodyfont
+      \let\jmlr@this@theoremheader\@theoremheaderfont
+      \let\jmlr@this@theoremsep\@theoremsep
+      \let\jmlr@this@theorempostheader\@theorempostheader
+    }%
+    \trivlist
+     \item[\hskip\labelsep{\jmlr@this@theoremheader #1\ #2\ (#3)%
+       \jmlr@this@theorempostheader}]%
+     \mbox{}\jmlr@this@theoremsep
+     \jmlr@this@theorembody
+  }
+  \newtheorem{example}{Example}
+  \newtheorem{theorem}{Theorem}
+  \ifjmlrcleveref
+    \newaliascnt{lemma}{theorem}
+    \newtheorem{lemma}[lemma]{Lemma}
+    \aliascntresetthe{lemma}
+    \crefname{lemma}{lemma}{lemmas}
+  \else
+    \newtheorem{lemma}[theorem]{Lemma}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{proposition}{theorem}
+    \newtheorem{proposition}[proposition]{Proposition}
+    \aliascntresetthe{proposition}
+    \crefname{proposition}{proposition}{propositions}
+  \else
+    \newtheorem{proposition}[theorem]{Proposition}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{remark}{theorem}
+    \newtheorem{remark}[remark]{Remark}
+    \aliascntresetthe{remark}
+    \crefname{remark}{remark}{remarks}
+  \else
+    \newtheorem{remark}[theorem]{Remark}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{corollary}{theorem}
+    \newtheorem{corollary}[corollary]{Corollary}
+    \aliascntresetthe{corollary}
+    \crefname{corollary}{corollary}{corollaries}
+  \else
+   \newtheorem{corollary}[theorem]{Corollary}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{definition}{theorem}
+    \newtheorem{definition}[definition]{Definition}
+    \aliascntresetthe{definition}
+    \crefname{definition}{definition}{definitions}
+  \else
+    \newtheorem{definition}[theorem]{Definition}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{conjecture}{theorem}
+    \newtheorem{conjecture}[conjecture]{Conjecture}
+    \aliascntresetthe{conjecture}
+    \crefname{conjecture}{conjecture}{conjectures}
+  \else
+    \newtheorem{conjecture}[theorem]{Conjecture}
+  \fi
+  \ifjmlrcleveref
+    \newaliascnt{axiom}{theorem}
+    \newtheorem{axiom}[axiom]{axiom}
+    \aliascntresetthe{axiom}
+    \crefname{axiom}{axiom}{axioms}
+  \else
+    \newtheorem{axiom}[theorem]{Axiom}
+  \fi
+\fi
+\endinput
+%%
+%% End of file `jmlrutils.sty'.

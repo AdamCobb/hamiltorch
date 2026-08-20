@@ -1,0 +1,50 @@
+{
+    "name": "pytorch-cuda-hamiltorch",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "options": ["--format=docker"]        // required for Podman, remove line if using Docker
+    },
+
+    "updateRemoteUserUID": false,
+    "overrideCommand": false,
+    "shutdownAction": "none",
+    
+    // `type=bind,z` required for Podman, replace with `type=bind` if using Docker
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/jovyan/work,type=bind,z", 
+    "workspaceFolder": "/home/jovyan/work",
+
+    "runArgs": [
+        "--user=1000:100",
+        "--userns=keep-id:uid=1000,gid=100",  // required for Podman, remove line if using Docker
+        "--name=pytorch-cuda-hamiltorch", // needs to be unique
+        "--hostname=pytorch-cuda-hamiltorch_container", // needs to be unique
+        "--device=nvidia.com/gpu=all",
+        "--security-opt=label=disable"
+    ],
+
+    "forwardPorts": [8888],
+    "portsAttributes": {
+        "8888": {
+            // Naming the Jupyterlab port
+            "label": "Jupyterlab",
+            // Disable autoforwarding of ports (by default, only 8888 is necessary)
+            "onAutoForward": "ignore"
+        }
+    },
+
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/conda/bin/python"
+            },
+            "extensions": [
+                "ms-python.python",             // for Python
+                "ms-toolsai.jupyter",           // for Python
+                "ms-toolsai.jupyter-keymap",    // for Python
+                "quarto.quarto",                // for Python and R
+                "ms-vscode.live-server",
+                "analytic-signal.preview-pdf"
+            ]
+        }
+    }
+}
