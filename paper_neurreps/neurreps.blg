@@ -1,0 +1,59 @@
+This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: neurreps.aux
+The style file: plainnat.bst
+Database file #1: neurreps.bib
+Repeated entry---line 137 of file neurreps.bib
+ : @misc{greydanus2019hamiltonian
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 169 of file neurreps.bib
+ : @misc{hoffman2011nouturn
+ :                         ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 198 of file neurreps.bib
+ : @misc{greydanus2019hamiltonian
+ :                               ,
+I'm skipping whatever remains of this entry
+You've used 15 entries,
+            2773 wiz_defined-function locations,
+            686 strings with 7678 characters,
+and the built_in function-call counts, 6951 in all, are:
+= -- 587
+> -- 464
+< -- 7
++ -- 156
+- -- 141
+* -- 596
+:= -- 1070
+add.period$ -- 49
+call.type$ -- 15
+change.case$ -- 91
+chr.to.int$ -- 15
+cite$ -- 30
+duplicate$ -- 295
+empty$ -- 553
+format.name$ -- 158
+if$ -- 1447
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 10
+newline$ -- 85
+num.names$ -- 60
+pop$ -- 204
+preamble$ -- 1
+purify$ -- 77
+quote$ -- 0
+skip$ -- 244
+stack$ -- 0
+substring$ -- 145
+swap$ -- 34
+text.length$ -- 4
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 155
+warning$ -- 0
+while$ -- 54
+width$ -- 0
+write$ -- 202
+(There were 3 error messages)

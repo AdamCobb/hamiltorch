@@ -1,0 +1,62 @@
+%%
+%% This is file `everypage.sty',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% everypage.dtx  (with options: `everypage')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% Copyright 2006-2007, 2020
+%% Sergio Callegari <sergio.callegari@gmail.com>
+%% 
+%% ---------------------------------------------
+%% This file is part of the everypage package,
+%% a contribution to the LaTeX2e system.
+%% ---------------------------------------------
+%% 
+%% This program consists of the files listed in the README.md file included in
+%% the package.
+%% 
+%% Any modified versions of this file must be renamed with new filenames
+%% distinct from everypage.sty.
+%% 
+%% For distribution of the original source see the terms for copying and
+%% modification in the file everypage.dtx.
+%% 
+%% This generated file may be distributed as long as the original source files,
+%% as listed above, are part of the same distribution. (The sources need not
+%% necessarily be in the same archive or directory.)
+%% 
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{everypage}%
+  [2020/10/17 R2.0b Hooks to run on every page]
+\PackageWarningNoLine{everypage}{%
+  Functionality similar to this package has recently\MessageBreak
+  been implemented in LaTeX. This package is now in\MessageBreak
+  legacy status.\MessageBreak
+  Please, don't use it in new documents and packages}
+\@ifundefined{AddToHook}{%
+  \PackageWarningNoLine{everypage}{%
+    You appear to be running a version of LaTeX\MessageBreak
+    too old to provide the new functionality.\MessageBreak
+    Forcing fallback to `everypage-1x` that\MessageBreak
+    uses an older code base}
+  \RequirePackage{everypage-1x}
+  \endinput}{%
+  \PackageWarningNoLine{everypage}{%
+    You appear to be running a version of LaTeX\MessageBreak
+    providing the new functionality.\MessageBreak
+    Doing the best to deliver the original `everypage`\MessageBreak
+    interface on top of it. Strict equivalence is\MessageBreak
+    not possible, breakage may occur.\MessageBreak
+    If truly needed, Use `everypage-1x` to force the\MessageBreak
+    loading of an older code base}}
+\newcommand*{\AddEverypageHook}[1]{%
+  \AddToHook{shipout/background}{\put(1in,-1in){#1}}}
+\newcommand*{\AddThispageHook}[1]{%
+  \AddToHookNext{shipout/background}{\put(1in,-1in){#1}}}
+\endinput
+%%
+%% End of file `everypage.sty'.

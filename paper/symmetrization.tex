@@ -1,0 +1,152 @@
+% ---------------------------------------------------------------------------
+% Time-symmetric symplectic networks: exact detailed balance for learned proposals
+% Insert into paper.tex (e.g. after the SNN methodology subsection) with
+%   \input{symmetrization}
+% ---------------------------------------------------------------------------
+
+\subsection{Exactly Reversible Symplectic Network Proposals}
+\label{sec:symmetrization}
+
+Symplectic Neural Networks are symplectic by construction, and therefore
+volume preserving. Volume preservation is only one of the two conditions a
+Metropolis proposal requires, so a learned flow map is not admissible as it
+stands. We set out what the remaining condition is and give a construction that
+supplies it exactly, at no cost in parameters.
+
+\subsubsection{Validity conditions for a deterministic proposal}
+
+Let $z = (q,p) \in \R^{2D}$ and let $\pi(z) \propto e^{-H(z)}$ be the target on
+phase space. Write $R(q,p) = (q,-p)$ for the momentum flip, so that
+$R^2 = \mathrm{Id}$, and assume as usual that the Hamiltonian is even in the
+momentum, $H \circ R = H$. A Metropolis--Hastings scheme that proposes
+$z' = T(z)$ deterministically and accepts with probability
+$\min\{1, e^{H(z) - H(T z)}\}$ leaves $\pi$ invariant provided
+\begin{align}
+    \text{(V)} \quad & |\det \nabla T(z)| = 1 &&\text{(volume preservation),} \label{eq:vol}\\
+    \text{(I)} \quad & (R \circ T) \circ (R \circ T) = \mathrm{Id} &&\text{(involutivity).} \label{eq:inv}
+\end{align}
+Condition \eqref{eq:vol} removes the Jacobian factor from the acceptance ratio
+and \eqref{eq:inv} supplies the reverse move required by detailed balance; see
+\cite{Green1995, Tierney1998}. The leapfrog integrator satisfies both for
+\emph{any} force field depending on position alone, which is why classical
+surrogate methods that learn $\nabla U$ and integrate it remain exact: an
+inaccurate network lowers the acceptance rate but never biases the chain.
+
+A learned flow map is a different situation. An SNN $\Phi_t$ satisfies
+\eqref{eq:vol} because each of its layers is a shear, but nothing in its
+architecture or training objective enforces \eqref{eq:inv}. Empirically the
+involution defect $\|(R\Phi_t)^2 z - z\|_\infty$ is of order $10^{-1}$ both at
+initialisation and after training, so the resulting chain does not target
+$\pi$, and the discrepancy does not vanish as the training set grows unless
+$\Phi_t$ converges to the exact flow.
+
+\subsubsection{The symmetrized map}
+
+Every SNN layer updates either $q$ or $p$ using a function of the
+\emph{other}, unmodified, half of the state. Such a shear is invertible in
+closed form: the increment can be recomputed from the output and subtracted.
+Composing these layer inverses in reverse order gives an exact inverse
+$\Phi_t^{-1}$, evaluated at the same cost as $\Phi_t$ and to machine precision
+(we measure $\|\Phi_t^{-1}\Phi_t z - z\|_\infty \approx 10^{-15}$).
+
+Given this, define the \emph{time-symmetric} map
+\begin{equation}
+    \Psi_t \;:=\; R \circ \Phi_{t/2}^{-1} \circ R \circ \Phi_{t/2}.
+    \label{eq:psi}
+\end{equation}
+
+\begin{proposition}
+\label{prop:involution}
+For any $\Phi_{t/2}$ that is invertible, $\Psi_t$ satisfies \eqref{eq:inv}.
+If in addition $\Phi_{t/2}$ is symplectic, $\Psi_t$ satisfies \eqref{eq:vol}.
+Consequently the Metropolis--Hastings chain with proposal $\Psi_t$ and
+acceptance $\min\{1, e^{H(z)-H(\Psi_t z)}\}$ leaves $\pi$ invariant,
+irrespective of the accuracy of $\Phi$.
+\end{proposition}
+
+\begin{proof}
+Write $\Phi := \Phi_{t/2}$. Using $R^2 = \mathrm{Id}$ in \eqref{eq:psi},
+\begin{equation*}
+    R \circ \Psi_t \;=\; R \circ R \circ \Phi^{-1} \circ R \circ \Phi
+                  \;=\; \Phi^{-1} \circ R \circ \Phi .
+\end{equation*}
+This is a conjugation of the involution $R$, hence an involution:
+\begin{equation*}
+    (R \circ \Psi_t)^2
+      = \Phi^{-1} R \Phi \, \Phi^{-1} R \Phi
+      = \Phi^{-1} R^2 \Phi
+      = \Phi^{-1}\Phi = \mathrm{Id},
+\end{equation*}
+which is \eqref{eq:inv}. For \eqref{eq:vol}, note $R$ is anti-symplectic: it
+reverses the sign of the canonical form, $R^{*}(dq \wedge dp) = -\,dq\wedge dp$.
+Therefore $R \circ \Phi^{-1} \circ R$ is symplectic, being a composition of two
+anti-symplectic maps with a symplectic one, and $\Psi_t$ is a composition of
+two symplectic maps, hence symplectic. Symplecticity implies
+$|\det \nabla \Psi_t| = 1$. Neither argument uses any property of $\Phi$
+beyond invertibility and symplecticity, so both hold for arbitrary network
+weights.
+\end{proof}
+
+The half-step in \eqref{eq:psi} makes the construction \emph{consistent}: it
+does not perturb an already-exact model.
+
+\begin{lemma}
+\label{lem:consistency}
+If $\Phi_s$ is the exact time-$s$ flow of a Hamiltonian $H$ with $H \circ R = H$,
+then $\Psi_t = \Phi_t$.
+\end{lemma}
+
+\begin{proof}
+Reversibility of such a flow gives $R \circ \Phi_s \circ R = \Phi_{-s} = \Phi_s^{-1}$,
+hence $\Phi_{t/2}^{-1} = R \circ \Phi_{t/2} \circ R$. Substituting into
+\eqref{eq:psi},
+\begin{equation*}
+    \Psi_t = R \,(R \Phi_{t/2} R)\, R\, \Phi_{t/2}
+           = \Phi_{t/2} \circ \Phi_{t/2} = \Phi_t . \qedhere
+\end{equation*}
+\end{proof}
+
+Equation \eqref{eq:psi} is the classical adjoint (symmetrisation) composition
+of geometric integration \cite{HairerLubichWanner}, in which a method is
+composed with its adjoint $\Phi^{*}_t = \Phi_{-t}^{-1}$ to obtain a symmetric
+method; here the adjoint is realised as $R \circ \Phi^{-1} \circ R$. The same
+construction is used by \cite{valperga2022reversible} to build reversible
+symplectic architectures for learning chaotic Hamiltonian dynamics, where it is
+applied to H\'enon maps and coupling layers rather than to SympNet modules and
+is not connected to sampling. Enforcing exact invertibility so that a learned
+proposal admits a tractable reverse move is likewise established in the
+neural-MCMC literature \cite{song2017nice, levy2018generalizing}, and
+\cite{spanbauer2020involutive} give a general construction from
+volume-preserving involutions. What we add is the proposal itself: to our
+knowledge symplectic networks have not previously been used as MCMC proposals,
+the surrogate literature learning fields inside integrators and the
+symplectic-network literature predicting dynamics. The requirement identified
+here is therefore a design constraint on the construction we propose --- a
+learned flow map supplies \eqref{eq:vol} but not \eqref{eq:inv}, so it is not
+admissible as it stands --- rather than a correction to published work. We
+accompany it with closed-form layer inverses that make \eqref{eq:psi} exact for
+the LA- and G-SympNet architectures.
+
+\subsubsection{Interpretation and cost}
+
+Proposition~\ref{prop:involution} should be read as a statement about
+\emph{structure}, not accuracy. The learned map is not thereby made a better
+approximation of the Hamiltonian flow; rather, $\Psi_t$ is constrained to
+possess a symmetry the true flow already possesses, namely
+$R \Psi_t R = \Psi_t^{-1}$. In this sense the symmetrisation plays the same
+role for time-reversal that the SympNet architecture plays for the symplectic
+form: it restricts the hypothesis class to maps that the exact solution
+inhabits. Since the constraint is satisfied identically in the weights, it
+also removes the need to spend training signal on a property that can be
+imposed for free.
+
+The map \eqref{eq:psi} evaluates the network twice, each at half the step, and
+introduces \emph{no additional parameters}. Note that a $\Psi$ built from an
+$n$-block network has the same effective depth as a plain $2n$-block network
+while carrying half as many parameters; comparisons should therefore control
+for effective depth rather than block count.
+
+Finally, the property is preserved under composition, so trajectories built
+from repeated application remain valid proposals: if $R \Psi R = \Psi^{-1}$
+then $R \Psi^{k} R = (R\Psi R)^{k} = \Psi^{-k}$, whence
+$(R \Psi^{k})^2 = \mathrm{Id}$ for every $k \in \N$.

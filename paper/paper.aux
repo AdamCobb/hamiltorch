@@ -1,0 +1,106 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{baydin2018automatic}
+\citation{Brooks_2011}
+\citation{hoffman2011nouturn}
+\citation{Betancourt_2013}
+\citation{greydanus2019hamiltonian}
+\citation{chen2019neural}
+\citation{10.1093/oso/9780198526155.003.0045}
+\citation{Li_2019}
+\citation{DHULIPALA2023112425}
+\providecommand \oddpage@label [2]{}
+\newlabel{introduction}{{1}{1}{}{section.1}{}}
+\newlabel{introduction@cref}{{[section][1][]1}{[1][1][]1}}
+\citation{Brooks_2011}
+\citation{Betancourt_2013}
+\citation{Tao_2016}
+\citation{Li_2019}
+\citation{chen2019neural}
+\citation{poli2020torchdyn}
+\citation{jin2020sympnets}
+\citation{Li_2019}
+\newlabel{background}{{2}{2}{}{section.2}{}}
+\newlabel{background@cref}{{[section][2][]2}{[1][1][]2}}
+\citation{Tao_2016}
+\citation{paszke2019pytorch}
+\citation{Tao_2016}
+\citation{jin2020sympnets}
+\newlabel{sec:ode-training}{{3.2.1}{3}{}{subsubsection.3.2.1}{}}
+\newlabel{sec:ode-training@cref}{{[subsubsection][1][3,2]3.2.1}{[1][3][]3}}
+\citation{ramachandran2017searching}
+\citation{paszke2019pytorch}
+\newlabel{eq:snn-generator}{{1}{4}{}{equation.3.1}{}}
+\newlabel{eq:snn-generator@cref}{{[equation][1][]1}{[1][4][]4}}
+\newlabel{sec:snn-training}{{3.3.1}{4}{}{subsubsection.3.3.1}{}}
+\newlabel{sec:snn-training@cref}{{[subsubsection][1][3,3]3.3.1}{[1][4][]4}}
+\newlabel{sec:symmetrization}{{3.4}{4}{}{subsection.3.4}{}}
+\newlabel{sec:symmetrization@cref}{{[subsection][4][3]3.4}{[1][4][]4}}
+\citation{Green1995,Tierney1998}
+\citation{HairerLubichWanner}
+\citation{valperga2022reversible}
+\citation{song2017nice,levy2018generalizing}
+\citation{spanbauer2020involutive}
+\newlabel{eq:vol}{{2}{5}{}{equation.3.2}{}}
+\newlabel{eq:vol@cref}{{[equation][2][]2}{[1][4][]5}}
+\newlabel{eq:inv}{{3}{5}{}{equation.3.3}{}}
+\newlabel{eq:inv@cref}{{[equation][3][]3}{[1][4][]5}}
+\newlabel{eq:psi}{{4}{5}{}{equation.3.4}{}}
+\newlabel{eq:psi@cref}{{[equation][4][]4}{[1][5][]5}}
+\newlabel{prop:involution}{{3.1}{5}{}{theorem.3.1}{}}
+\newlabel{prop:involution@cref}{{[proposition][1][3]3.1}{[1][5][]5}}
+\newlabel{lem:consistency}{{3.2}{5}{}{theorem.3.2}{}}
+\newlabel{lem:consistency@cref}{{[lemma][2][3]3.2}{[1][5][]5}}
+\citation{Li_2019}
+\citation{Tao_2016}
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{6}{Neural Network Architectures used in experiments. Note (a) outputs the gradients directly, while (b) first models the Hamiltonian and then produces the gradients via auto-differentiation}{figure.caption.1}{}}
+\newlabel{fig:architecture@cref}{{[figure][1][]1}{[1][6][]6}}
+\newlabel{Experiment parameters}{{1}{6}{Experiment parameters, including from L to R distribution name, log posterior density, step size, and number of training samples. The GP regression target is the posterior over three hyperparameters (log lengthscale, log signal variance, log noise variance) of a squared-exponential GP fit to $200$ observations under standard normal priors; each gradient evaluation requires an $O(n^3)$ Cholesky factorization, placing it in the expensive-likelihood regime that motivates surrogate methods}{table.caption.2}{}}
+\newlabel{Experiment parameters@cref}{{[table][1][]1}{[1][6][]6}}
+\newlabel{figure:gaussian}{{2}{7}{Samples from each method for the multivariate Gaussian. The integrator-based surrogates reproduce the target. The unsymmetrized symplectic networks (G-SympNet and both gradient-supervised variants) visibly do not: they place mass in two lobes with a hole at the mode, which is not a feature of the target but the bias of an invalid proposal. This is the failure of \eqref {eq:inv} made visible --- these maps are \emph {exactly} symplectic, so the defect is not approximate symplecticity but the missing involution (\Cref {sec:symmetrization}); the symmetrized construction \eqref {eq:psi} repairs it}{figure.caption.3}{}}
+\newlabel{figure:gaussian@cref}{{[figure][2][]2}{[1][6][]7}}
+\newlabel{figure:gaussian-rev}{{3}{8}{Reversibility of the Hamiltonian paths for the multivariate Gaussian: forward trajectories (blue) and the paths obtained by flipping the momentum and integrating back (red), over the sampled positions (green). Quantitative values for every target are given in \Cref {figure:reversibility-stats}. Note that the unsymmetrized symplectic networks sample a split support, so their backward paths start from a region the target does not concentrate on}{figure.caption.4}{}}
+\newlabel{figure:gaussian-rev@cref}{{[figure][3][]3}{[1][6][]8}}
+\newlabel{figure:banana}{{4}{9}{Samples from each method for the Banana distribution. This target should not be read as a comparison between methods: exact HMC itself attains an effective sample size of order $1$ here at $L=5$, $\epsilon =0.1$, so no method is sampling it adequately. The banana's curvature grows with $\theta _1$, which caps the stable step size while the marginal scale demands long trajectories --- a conditioning problem that a fixed identity mass matrix cannot resolve, and one better addressed by the Riemannian methods of \Cref {sec:symmetrization}}{figure.caption.5}{}}
+\newlabel{figure:banana@cref}{{[figure][4][]4}{[1][6][]9}}
+\newlabel{figure:hdgaussian}{{5}{10}{Samples from each method for the $30$-dimensional Gaussian (first two coordinates shown)}{figure.caption.6}{}}
+\newlabel{figure:hdgaussian@cref}{{[figure][5][]5}{[1][6][]10}}
+\newlabel{figure:normal-gamma}{{6}{11}{Samples from each method for the Normal-Gamma posterior}{figure.caption.7}{}}
+\newlabel{figure:normal-gamma@cref}{{[figure][6][]6}{[1][6][]11}}
+\newlabel{figure:normal-gamma-rev}{{7}{12}{Reversibility of the Hamiltonian paths for the Normal-Gamma distribution: forward trajectories (blue) and the paths obtained by flipping the momentum and integrating back (red), over the sampled positions (green). Quantitative values are given in \Cref {figure:reversibility-stats}}{figure.caption.8}{}}
+\newlabel{figure:normal-gamma-rev@cref}{{[figure][7][]7}{[1][6][]12}}
+\newlabel{figure:ess-stats}{{8}{13}{Effective samples per second at the full training budget (log scale; dot plots rather than bars, since a bar encodes magnitude by length from zero and a log axis has no zero). Markers are coloured by family; unsymmetrized flow maps whose reversibility error exceeds $10^{-6}$ are drawn as open circles, because their ESS does not certify a valid sampler. Among methods that are valid proposals, trajectory-guided NNODEgHMC attains the highest ESS/s on three of the four targets, modestly ahead of exact HMC ($81.3$ versus $69.3$ on the Gaussian). The banana column should not be read as a comparison: exact HMC itself achieves an ESS of order $1$ there, so no method is sampling that target adequately}{figure.caption.9}{}}
+\newlabel{figure:ess-stats@cref}{{[figure][8][]8}{[1][6][]13}}
+\newlabel{figure:ess-vs-training}{{9}{14}{ESS/s as a function of the fraction of burn-in trajectories used for surrogate training, across all four distributions. NNODEgHMC (trajectory-guided) reaches competitive ESS/s with substantially fewer training samples than NNgHMC, supporting the claim that trajectory-level supervision enables more sample-efficient training. HMC is shown as a dashed reference. SNN methods are omitted from this panel: as \Cref {figure:reversibility-stats} shows, the unsymmetrized variants are not valid proposals, so their ESS/s is not interpretable as sampling efficiency}{figure.caption.10}{}}
+\newlabel{figure:ess-vs-training@cref}{{[figure][9][]9}{[1][6][]14}}
+\newlabel{figure:reversibility-stats}{{10}{15}{Reversibility error for each method, log scale. A Hamiltonian flow is time-reversal symmetric, so flipping the momentum and travelling for $L$ steps must return the initial position; the error is the distance between the starting point and the point so reached. The integrator-based methods are exact to machine precision ($1.3\times 10^{-15}$ to $7.7\times 10^{-11}$), which is a property of the integrator and holds for any learned field. The unsymmetrized SNNs are not: their error spans $7.7\times 10^{-7}$ to $9.3\times 10^{6}$, i.e.\^^Mup to thirteen orders of magnitude worse. This is a structural deficiency rather than an approximation error, and it does not diminish with more training data; see \Cref {sec:symmetrization}}{figure.caption.11}{}}
+\newlabel{figure:reversibility-stats@cref}{{[figure][10][]10}{[1][6][]15}}
+\newlabel{figure:hamiltonian-stats}{{11}{16}{Mean relative change in the Hamiltonian along proposal trajectories, log scale. A symplectic integrator applied to a learned field conserves a modified Hamiltonian and so shows little systematic drift; the integrator-based surrogates behave accordingly. The unsymmetrized SNNs show substantially larger drift. We caution that conservation and reversibility are distinct properties: a map can be exactly symplectic, and hence volume preserving, while failing the involution condition that the Metropolis correction requires (\Cref {figure:reversibility-stats})}{figure.caption.12}{}}
+\newlabel{figure:hamiltonian-stats@cref}{{[figure][11][]11}{[1][6][]16}}
+\bibdata{bibliography}
+\bibcite{baydin2018automatic}{{1}{2018}{{Baydin et~al.}}{{Baydin, Pearlmutter, Radul, and Siskind}}}
+\bibcite{Betancourt_2013}{{2}{2013}{{Betancourt}}{{}}}
+\bibcite{Brooks_2011}{{3}{2011}{{Brooks et~al.}}{{Brooks, Gelman, Jones, and Meng}}}
+\bibcite{chen2019neural}{{4}{2019}{{Chen et~al.}}{{Chen, Rubanova, Bettencourt, and Duvenaud}}}
+\bibcite{DHULIPALA2023112425}{{5}{2023}{{Dhulipala et~al.}}{{Dhulipala, Che, and Shields}}}
+\bibcite{Green1995}{{6}{1995}{{Green}}{{}}}
+\bibcite{greydanus2019hamiltonian}{{7}{2019}{{Greydanus et~al.}}{{Greydanus, Dzamba, and Yosinski}}}
+\bibcite{HairerLubichWanner}{{8}{2006}{{Hairer et~al.}}{{Hairer, Lubich, and Wanner}}}
+\bibcite{hoffman2011nouturn}{{9}{2011}{{Hoffman \& Gelman}}{{Hoffman and Gelman}}}
+\bibcite{jin2020sympnets}{{10}{2020}{{Jin et~al.}}{{Jin, Zhang, Zhu, Tang, and Karniadakis}}}
+\bibcite{levy2018generalizing}{{11}{2018}{{Levy et~al.}}{{Levy, Hoffman, and Sohl-Dickstein}}}
+\bibcite{Li_2019}{{12}{2019}{{Li et~al.}}{{Li, Holbrook, Shahbaba, and Baldi}}}
+\bibcite{paszke2019pytorch}{{13}{2019}{{Paszke et~al.}}{{Paszke, Gross, Massa, Lerer, Bradbury, Chanan, Killeen, Lin, Gimelshein, Antiga, Desmaison, Köpf, Yang, DeVito, Raison, Tejani, Chilamkurthy, Steiner, Fang, Bai, and Chintala}}}
+\bibcite{poli2020torchdyn}{{14}{2020}{{Poli et~al.}}{{Poli, Massaroli, Yamashita, Asama, and Park}}}
+\bibcite{ramachandran2017searching}{{15}{2017}{{Ramachandran et~al.}}{{Ramachandran, Zoph, and Le}}}
+\bibcite{10.1093/oso/9780198526155.003.0045}{{16}{2003}{{Rasmussen}}{{}}}
+\bibcite{song2017nice}{{17}{2017}{{Song et~al.}}{{Song, Zhao, and Ermon}}}
+\bibcite{spanbauer2020involutive}{{18}{2020}{{Spanbauer et~al.}}{{Spanbauer, Freer, and Mansinghka}}}
+\bibcite{Tao_2016}{{19}{2016}{{Tao}}{{}}}
+\bibcite{Tierney1998}{{20}{1998}{{Tierney}}{{}}}
+\bibcite{valperga2022reversible}{{21}{2022}{{Valperga et~al.}}{{Valperga, Webster, Turaev, Klein, and Lamb}}}
+\bibstyle{icml2024}
+\gdef \@abspage@last{17}
